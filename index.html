@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>go-i2p/su3</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="nav-sidebar">
+    <div class="repo-info">
+      <h2>
+        <a href="index.html">go-i2p/su3</a>
+      </h2>
+      <div class="repo-meta">
+        📝 4 commits
+         • 📜 MIT License
+      </div>
+    </div>
+    
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Repository Overview</a></li>
+      
+      
+    </ul>
+    
+    <div class="nav-footer">
+      <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a>
+    </div>
+  </nav>
+  
+  <div class="main-content">
+    <header class="repo-header">
+      <h1>go-i2p/su3</h1>
+      <div class="repo-description">--</div>
+      
+      <div class="repo-stats">
+        
+        <div class="repo-stat">
+          <span>📝</span> <span>4 commits</span>
+        </div>
+        
+        
+        <div class="repo-stat">
+          <span>📅</span> <span>Last updated: July 16, 2025</span>
+        </div>
+        
+        
+        <div class="repo-stat">
+          <span>📜</span> <span>MIT License</span>
+        </div>
+        
+      </div>
+    </header>
+    
+    <main>
+      
+      <section id="readme" class="repo-section">
+        <h2>README</h2>
+        <div class="readme-content">
+          <h1 id="su3">su3</h1>
+
+<p>&ndash;</p>
+
+<pre><code>import &quot;github.com/go-i2p/go-i2p/lib/su3&quot;
+</code></pre>
+
+<p><img src="su3.svg" alt="su3.svg" /></p>
+
+<p>Package su3 implements reading the SU3 file format.</p>
+
+<p>SU3 files provide content that is signed by a known identity. They are used to
+distribute many types of data, including reseed files, plugins, blocklists, and
+more.</p>
+
+<p>See: <a href="https://geti2p.net/spec/updates#su3-file-specification" target="_blank">https://geti2p.net/spec/updates#su3-file-specification</a></p>
+
+<p>The Read() function takes an io.Reader, and it returns a *SU3. The *SU3 contains
+the SU3 file metadata, such as the type of the content and the signer ID. In
+order to get the file contents, one must pass in the public key associated with
+the file&rsquo;s signer, so that the signature can be validated. The content can still
+be read without passing in the key, but after returning the full content the
+error ErrInvalidSignature will be returned.</p>
+
+<p>Example usage:</p>
+
+<pre><code>    // Let's say we are reading an SU3 file from an HTTP body, which is an io.Reader.
+    su3File, err := su3.Read(body)
+    if err != nil {
+        // Handle error.
+    }
+    // Look up this signer's key.
+    key := somehow_lookup_the_key(su3File.SignerID)
+    // Read the content.
+    contentReader := su3File.Content(key)
+    bytes, err := ioutil.ReadAll(contentReader)
+    if errors.Is(err, su3.ErrInvalidSignature) {
+	       // The signature is invalid, OR a nil key was provided.
+    } else if err != nil {
+        // Handle error.
+    }
+</code></pre>
+
+<p>If you want to parse from a []byte, you can wrap it like this:</p>
+
+<pre><code>mySU3FileBytes := []byte{0x00, 0x01, 0x02, 0x03}
+su3File, err := su3.Read(bytes.NewReader(mySU3FileBytes))
+</code></pre>
+
+<p>One of the advantages of this library&rsquo;s design is that you can avoid buffering
+the file contents in memory. Here&rsquo;s how you would stream from an HTTP body
+directly to disk:</p>
+
+<pre><code>    su3File, err := su3.Read(body)
+    if err != nil {
+	       // Handle error.
+    }
+    // Look up this signer's key.
+    key := somehow_lookup_the_key(su3File.SignerID)
+    // Stream directly to disk.
+    f, err := os.Create(&quot;my_file.txt&quot;)
+    if err != nil {
+	       // Handle error.
+    }
+    _, err := io.Copy(f, su3File.Content(key))
+    if errors.Is(err, su3.ErrInvalidSignature) {
+	       // The signature is invalid, OR a nil key was provided.
+        // Don't trust the file, delete it!
+    } else if err != nil {
+        // Handle error.
+    }
+</code></pre>
+
+<p>Note: if you want to read the content, the Content() io.Reader must be read
+<em>before</em> the Signature() io.Reader. If you read the signature first, the content
+bytes will be thrown away. If you then attempt to read the content, you will get
+an error. For clarification, see TestReadSignatureFirst.</p>
+
+<h2 id="usage">Usage</h2>
+
+<pre><code class="language-go">var (
+	ErrMissingMagicBytes        = oops.Errorf(&quot;missing magic bytes&quot;)
+	ErrMissingUnusedByte6       = oops.Errorf(&quot;missing unused byte 6&quot;)
+	ErrMissingFileFormatVersion = oops.Errorf(&quot;missing or incorrect file format version&quot;)
+	ErrMissingSignatureType     = oops.Errorf(&quot;missing or invalid signature type&quot;)
+	ErrUnsupportedSignatureType = oops.Errorf(&quot;unsupported signature type&quot;)
+	ErrMissingSignatureLength   = oops.Errorf(&quot;missing signature length&quot;)
+	ErrMissingUnusedByte12      = oops.Errorf(&quot;missing unused byte 12&quot;)
+	ErrMissingVersionLength     = oops.Errorf(&quot;missing version length&quot;)
+	ErrVersionTooShort          = oops.Errorf(&quot;version length too short&quot;)
+	ErrMissingUnusedByte14      = oops.Errorf(&quot;missing unused byte 14&quot;)
+	ErrMissingSignerIDLength    = oops.Errorf(&quot;missing signer ID length&quot;)
+	ErrMissingContentLength     = oops.Errorf(&quot;missing content length&quot;)
+	ErrMissingUnusedByte24      = oops.Errorf(&quot;missing unused byte 24&quot;)
+	ErrMissingFileType          = oops.Errorf(&quot;missing or invalid file type&quot;)
+	ErrMissingUnusedByte26      = oops.Errorf(&quot;missing unused byte 26&quot;)
+	ErrMissingContentType       = oops.Errorf(&quot;missing or invalid content type&quot;)
+	ErrMissingUnusedBytes28To39 = oops.Errorf(&quot;missing unused bytes 28-39&quot;)
+	ErrMissingVersion           = oops.Errorf(&quot;missing version&quot;)
+	ErrMissingSignerID          = oops.Errorf(&quot;missing signer ID&quot;)
+	ErrMissingContent           = oops.Errorf(&quot;missing content&quot;)
+	ErrMissingSignature         = oops.Errorf(&quot;missing signature&quot;)
+	ErrInvalidPublicKey         = oops.Errorf(&quot;invalid public key&quot;)
+	ErrInvalidSignature         = oops.Errorf(&quot;invalid signature&quot;)
+)
+</code></pre>
+
+<h4 id="type-contenttype">type ContentType</h4>
+
+<pre><code class="language-go">type ContentType string
+</code></pre>
+
+<pre><code class="language-go">const (
+	UNKNOWN       ContentType = &quot;unknown&quot;
+	ROUTER_UPDATE ContentType = &quot;router_update&quot;
+	PLUGIN        ContentType = &quot;plugin&quot;
+	RESEED        ContentType = &quot;reseed&quot;
+	NEWS          ContentType = &quot;news&quot;
+	BLOCKLIST     ContentType = &quot;blocklist&quot;
+)
+</code></pre>
+
+<h4 id="type-filetype">type FileType</h4>
+
+<pre><code class="language-go">type FileType string
+</code></pre>
+
+<pre><code class="language-go">const (
+	ZIP      FileType = &quot;zip&quot;
+	XML      FileType = &quot;xml&quot;
+	HTML     FileType = &quot;html&quot;
+	XML_GZIP FileType = &quot;xml.gz&quot;
+	TXT_GZIP FileType = &quot;txt.gz&quot;
+	DMG      FileType = &quot;dmg&quot;
+	EXE      FileType = &quot;exe&quot;
+)
+</code></pre>
+
+<h4 id="type-su3">type SU3</h4>
+
+<pre><code class="language-go">type SU3 struct {
+	SignatureType   SignatureType
+	SignatureLength uint16
+	ContentLength   uint64
+	FileType        FileType
+	ContentType     ContentType
+	Version         string
+	SignerID        string
+}
+</code></pre>
+
+<h4 id="func-read">func  Read</h4>
+
+<pre><code class="language-go">func Read(reader io.Reader) (su3 *SU3, err error)
+</code></pre>
+
+<h4 id="func-su3-content">func (*SU3) Content</h4>
+
+<pre><code class="language-go">func (su3 *SU3) Content(publicKey interface{}) io.Reader
+</code></pre>
+
+<h4 id="func-su3-signature">func (*SU3) Signature</h4>
+
+<pre><code class="language-go">func (su3 *SU3) Signature() io.Reader
+</code></pre>
+
+<h4 id="type-signaturetype">type SignatureType</h4>
+
+<pre><code class="language-go">type SignatureType string
+</code></pre>
+
+<pre><code class="language-go">const (
+	DSA_SHA1               SignatureType = &quot;DSA-SHA1&quot;
+	ECDSA_SHA256_P256      SignatureType = &quot;ECDSA-SHA256-P256&quot;
+	ECDSA_SHA384_P384      SignatureType = &quot;ECDSA-SHA384-P384&quot;
+	ECDSA_SHA512_P521      SignatureType = &quot;ECDSA-SHA512-P521&quot;
+	RSA_SHA256_2048        SignatureType = &quot;RSA-SHA256-2048&quot;
+	RSA_SHA384_3072        SignatureType = &quot;RSA-SHA384-3072&quot;
+	RSA_SHA512_4096        SignatureType = &quot;RSA-SHA512-4096&quot;
+	EdDSA_SHA512_Ed25519ph SignatureType = &quot;EdDSA-SHA512-Ed25519ph&quot;
+)
+</code></pre>
+
+<p>su3</p>
+
+<p>github.com/go-i2p/go-i2p/lib/su3</p>
+
+<p><a href="/template.md">go-i2p template file</a></p>
+
+        </div>
+      </section>
+      
+      
+      
+      <section id="contributors" class="repo-section">
+        <h2>Top Contributors</h2>
+        <div class="contributors-list">
+          
+          <div class="contributor-item">
+            <!-- Use first letter as avatar if no image available -->
+            <div class="contributor-avatar">
+              e
+            </div>
+            <div class="contributor-info">
+              <div class="contributor-name">
+                eyedeekay
+              </div>
+              <div class="contributor-commits">
+                4 commits
+              </div>
+            </div>
+          </div>
+          
+        </div>
+        <a href="https://github.com/go-i2p/su3/graphs/contributors" target="_blank">View all contributors on GitHub →</a>
+      </section>
+      
+    </main>
+    
+    <footer class="page-footer">
+      <p>Generated on 2025-07-16 18:53:33 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
+    </footer>
+  </div>
+</body>
+</html>
