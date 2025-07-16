@@ -2,6 +2,7 @@ package su3
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -408,7 +409,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	sum := hash.Sum(nil)
-	aliceSignature, err = rsa.SignPKCS1v15(rand.Reader, aliceFakeKey, 0, sum)
+	aliceSignature, err = rsa.SignPKCS1v15(rand.Reader, aliceFakeKey, crypto.SHA256, sum)
 	if err != nil {
 		panic(err)
 	}

@@ -1,6 +1,7 @@
 package su3
 
 import (
+	"crypto"
 	"crypto/rsa"
 	"errors"
 	"hash"
@@ -77,7 +78,7 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 			} else {
 				pubKey = k
 			}
-			err := rsa.VerifyPKCS1v15(pubKey, 0, r.hash.Sum(nil), r.su3.signatureReader.bytes)
+			err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, r.hash.Sum(nil), r.su3.signatureReader.bytes)
 			if err != nil {
 				log.WithError(err).Error("Signature verification failed")
 				return l, ErrInvalidSignature
@@ -91,7 +92,7 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 			} else {
 				pubKey = k
 			}
-			err := rsa.VerifyPKCS1v15(pubKey, 0, r.hash.Sum(nil), r.su3.signatureReader.bytes)
+			err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA512, r.hash.Sum(nil), r.su3.signatureReader.bytes)
 			if err != nil {
 				log.WithError(err).Error("Signature verification failed")
 				return l, ErrInvalidSignature
