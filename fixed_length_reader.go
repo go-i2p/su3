@@ -2,8 +2,6 @@ package su3
 
 import (
 	"io"
-
-	"github.com/sirupsen/logrus"
 )
 
 // fixedLengthReader is a wrapper around io.Reader that limits reading to a fixed number of bytes.
@@ -27,10 +25,9 @@ func (r *fixedLengthReader) Read(p []byte) (n int, err error) {
 	}
 	n, err = r.reader.Read(p)
 	r.readSoFar += uint64(n)
-	log.WithFields(logrus.Fields{
-		"bytes_read":   n,
-		"total_read":   r.readSoFar,
-		"total_length": r.length,
-	}).Debug("Fixed length reader: Read operation")
+	log.WithField("bytes_read", n).
+		WithField("total_read", r.readSoFar).
+		WithField("total_length", r.length).
+		Debug("Fixed length reader: Read operation")
 	return n, err
 }
