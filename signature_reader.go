@@ -24,12 +24,33 @@ func (r *signatureReader) getBytes() {
 	// If content hasn't been read yet, throw it away.
 	if !r.su3.contentReader.finished {
 		log.Warn("Content not fully read, reading remaining content")
-		_, err := ioutil.ReadAll(r.su3.contentReader)
-		if err != nil {
-			log.WithError(err).Error("Failed to read remaining content")
-			r.err = oops.Errorf("reading content: %w", err)
-			return
+		// Calculate how much content remains to be read
+		var remainingLength uint64
+		if r.su3.contentReader.reader == nil {
+			// Content reader never initialized, need to read all content
+			remainingLength = r.su3.ContentLength
+		} else {
+			// Content reader partially read, read remaining content
+			remainingLength = r.su3.ContentLength - r.su3.contentReader.reader.readSoFar
 		}
+
+		// Read remaining content directly from the underlying reader to avoid mutex deadlock
+		if remainingLength > 0 {
+			contentReader := &fixedLengthReader{
+				length:    remainingLength,
+				readSoFar: 0,
+				reader:    r.su3.reader,
+			}
+			_, err := ioutil.ReadAll(contentReader)
+			if err != nil {
+				log.WithError(err).Error("Failed to read remaining content")
+				r.err = oops.Errorf("reading content: %w", err)
+				return
+			}
+		}
+		// Mark content as finished
+		r.su3.contentReader.finished = true
+		log.Debug("Marked content reader as finished after consuming remaining content")
 	}
 
 	// Read signature.

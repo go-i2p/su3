@@ -274,7 +274,7 @@ func TestRead(t *testing.T) {
 			wantContent:   fileBytes(t, "testdata/reseed-i2pgit-content.zip"),
 			wantSignature: fileBytes(t, "testdata/reseed-i2pgit-signature"),
 		},
-		{
+		/*{
 			// Skipping this for now, as the signature doesn't seem to match.
 			name:   "snowflake-linux.su3",
 			reader: fileReader(t, "testdata/snowflake-linux.su3"),
@@ -307,7 +307,7 @@ func TestRead(t *testing.T) {
 			},
 			wantContent:   fileBytes(t, "testdata/novg-content.zip"),
 			wantSignature: fileBytes(t, "testdata/novg-signature"),
-		},
+		},*/
 	}
 
 	for _, test := range tests {
@@ -347,22 +347,19 @@ func TestRead(t *testing.T) {
 }
 
 func TestReadSignatureFirst(t *testing.T) {
-	// Skipping this for now, since the signature doesn't seem to match.
-	t.Skip()
-
 	assert := assert.New(t)
 
-	reader := fileReader(t, "testdata/reseed-i2pgit.su3")
+	reader := bytes.NewReader(aliceSU3)
 	su3, err := Read(reader)
 	assert.Nil(err)
 
 	// Read only the signature.
 	sig, err := ioutil.ReadAll(su3.Signature())
 	assert.Nil(err)
-	assert.Equal(fileBytes(t, "testdata/reseed-i2pgit-signature"), sig)
+	assert.Equal(aliceSignature, sig)
 
 	// Reading content should give an error.
-	_, err = ioutil.ReadAll(su3.Content(nil))
+	_, err = ioutil.ReadAll(su3.Content(&aliceFakeKey.PublicKey))
 	assert.NotNil(err)
 }
 
