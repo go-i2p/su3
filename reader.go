@@ -2,6 +2,7 @@ package su3
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
 	"io"
@@ -78,10 +79,16 @@ func initializeReaders(su3 *SU3, sigType SignatureType, buff *bytes.Buffer) erro
 	log.Debug("Content reader initialized")
 
 	switch sigType {
-	case RSA_SHA256_2048:
+	case DSA_SHA1:
+		su3.contentReader.hash = sha1.New()
+		log.Debug("Using SHA1 hash for content")
+	case ECDSA_SHA256_P256, RSA_SHA256_2048:
 		su3.contentReader.hash = sha256.New()
 		log.Debug("Using SHA256 hash for content")
-	case RSA_SHA512_4096:
+	case ECDSA_SHA384_P384, RSA_SHA384_3072:
+		su3.contentReader.hash = sha512.New384()
+		log.Debug("Using SHA384 hash for content")
+	case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
 		su3.contentReader.hash = sha512.New()
 		log.Debug("Using SHA512 hash for content")
 	}
