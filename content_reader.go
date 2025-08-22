@@ -6,6 +6,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
+	"encoding/asn1"
 	"errors"
 	"hash"
 	"io"
@@ -13,6 +14,16 @@ import (
 
 	"github.com/samber/oops"
 )
+
+// dsaSignature represents the ASN.1 DER structure of a DSA signature
+type dsaSignature struct {
+	R, S *big.Int
+}
+
+// ecdsaSignature represents the ASN.1 DER structure of an ECDSA signature
+type ecdsaSignature struct {
+	R, S *big.Int
+}
 
 // contentReader provides access to the content of an SU3 file with signature verification.
 // Moved from: su3.go
@@ -124,17 +135,22 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 			} else {
 				pubKey = k
 			}
-			// DSA signature is (r,s) pair, need to extract from DER encoding
+			// DSA signature should be in DER-encoded ASN.1 format
 			sigBytes := r.su3.signatureReader.bytes
 			if len(sigBytes) < 8 {
 				log.Error("DSA signature too short")
 				return l, ErrInvalidSignature
 			}
-			// For DSA, signature is typically DER-encoded (r,s) pair
-			// This is a simplified implementation - production would need proper ASN.1 DER parsing
-			rVal := new(big.Int).SetBytes(sigBytes[:len(sigBytes)/2])
-			sVal := new(big.Int).SetBytes(sigBytes[len(sigBytes)/2:])
-			verified := dsa.Verify(pubKey, r.hash.Sum(nil), rVal, sVal)
+
+			// Parse DER-encoded DSA signature
+			var dsaSig dsaSignature
+			_, err := asn1.Unmarshal(sigBytes, &dsaSig)
+			if err != nil {
+				log.WithError(err).Error("Failed to parse DSA signature DER encoding")
+				return l, ErrInvalidSignature
+			}
+
+			verified := dsa.Verify(pubKey, r.hash.Sum(nil), dsaSig.R, dsaSig.S)
 			if !verified {
 				log.Error("DSA signature verification failed")
 				return l, ErrInvalidSignature
@@ -148,15 +164,22 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 			} else {
 				pubKey = k
 			}
-			// ECDSA signature is (r,s) pair
+			// ECDSA signature should be in DER-encoded ASN.1 format
 			sigBytes := r.su3.signatureReader.bytes
 			if len(sigBytes) < 8 {
 				log.Error("ECDSA signature too short")
 				return l, ErrInvalidSignature
 			}
-			rVal := new(big.Int).SetBytes(sigBytes[:len(sigBytes)/2])
-			sVal := new(big.Int).SetBytes(sigBytes[len(sigBytes)/2:])
-			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), rVal, sVal)
+
+			// Parse DER-encoded ECDSA signature
+			var ecdsaSig ecdsaSignature
+			_, err := asn1.Unmarshal(sigBytes, &ecdsaSig)
+			if err != nil {
+				log.WithError(err).Error("Failed to parse ECDSA signature DER encoding")
+				return l, ErrInvalidSignature
+			}
+
+			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), ecdsaSig.R, ecdsaSig.S)
 			if !verified {
 				log.Error("ECDSA-SHA256-P256 signature verification failed")
 				return l, ErrInvalidSignature
@@ -170,14 +193,22 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 			} else {
 				pubKey = k
 			}
+			// ECDSA signature should be in DER-encoded ASN.1 format
 			sigBytes := r.su3.signatureReader.bytes
 			if len(sigBytes) < 8 {
 				log.Error("ECDSA signature too short")
 				return l, ErrInvalidSignature
 			}
-			rVal := new(big.Int).SetBytes(sigBytes[:len(sigBytes)/2])
-			sVal := new(big.Int).SetBytes(sigBytes[len(sigBytes)/2:])
-			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), rVal, sVal)
+
+			// Parse DER-encoded ECDSA signature
+			var ecdsaSig ecdsaSignature
+			_, err := asn1.Unmarshal(sigBytes, &ecdsaSig)
+			if err != nil {
+				log.WithError(err).Error("Failed to parse ECDSA signature DER encoding")
+				return l, ErrInvalidSignature
+			}
+
+			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), ecdsaSig.R, ecdsaSig.S)
 			if !verified {
 				log.Error("ECDSA-SHA384-P384 signature verification failed")
 				return l, ErrInvalidSignature
@@ -191,14 +222,22 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 			} else {
 				pubKey = k
 			}
+			// ECDSA signature should be in DER-encoded ASN.1 format
 			sigBytes := r.su3.signatureReader.bytes
 			if len(sigBytes) < 8 {
 				log.Error("ECDSA signature too short")
 				return l, ErrInvalidSignature
 			}
-			rVal := new(big.Int).SetBytes(sigBytes[:len(sigBytes)/2])
-			sVal := new(big.Int).SetBytes(sigBytes[len(sigBytes)/2:])
-			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), rVal, sVal)
+
+			// Parse DER-encoded ECDSA signature
+			var ecdsaSig ecdsaSignature
+			_, err := asn1.Unmarshal(sigBytes, &ecdsaSig)
+			if err != nil {
+				log.WithError(err).Error("Failed to parse ECDSA signature DER encoding")
+				return l, ErrInvalidSignature
+			}
+
+			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), ecdsaSig.R, ecdsaSig.S)
 			if !verified {
 				log.Error("ECDSA-SHA512-P521 signature verification failed")
 				return l, ErrInvalidSignature
