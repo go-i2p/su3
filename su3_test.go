@@ -613,3 +613,55 @@ func TestMain(m *testing.M) {
 	// Run tests.
 	os.Exit(m.Run())
 }
+
+// TestContentLengthBoundsValidation tests that excessive content lengths are rejected
+func TestContentLengthBoundsValidation(t *testing.T) {
+	// Create a malformed SU3 with maximum uint64 content length
+	maxContentLength := make([]byte, 8)
+	binary.BigEndian.PutUint64(maxContentLength, 0xFFFFFFFFFFFFFFFF) // Max uint64
+
+	malformedSU3 := appendBytes(
+		[]byte("I2Psu3"),   // Magic bytes
+		[]byte{0x00},       // Unused byte 6
+		[]byte{0x00},       // File format version
+		[]byte{0x00, 0x04}, // Signature type RSA_SHA256_2048
+		[]byte{0x01, 0x00}, // Signature length 256
+		[]byte{0x00},       // Unused byte 12
+		[]byte{0x10},       // Version length 16
+		[]byte{0x00},       // Unused byte 14
+		[]byte{0x05},       // Signer ID length 5
+		maxContentLength,   // Content length = max uint64
+		[]byte{0x00},       // Unused byte 24
+		[]byte{0x02},       // File type HTML
+		[]byte{0x00},       // Unused byte 26
+		[]byte{0x00},       // Content type unknown
+		[]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // Unused bytes 28-39
+		appendBytes([]byte("1234567890"), []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),  // Version with padding
+		[]byte("alice"), // Signer ID
+	)
+
+	// Try to parse this malformed SU3
+	_, err := Read(bytes.NewReader(malformedSU3))
+
+	// Should fail with content length validation error
+	assert.Error(t, err, "Expected error for excessive content length")
+	assert.Contains(t, err.Error(), "content length exceeds maximum allowed size", "Expected content length validation error")
+}
+
+// TestNormalContentLengthStillWorks verifies that normal SU3 files with reasonable content lengths still work
+func TestNormalContentLengthStillWorks(t *testing.T) {
+	// Test with a real SU3 file from testdata
+	f, err := os.Open("testdata/reseed-i2pgit.su3")
+	assert.NoError(t, err, "Failed to open test SU3 file")
+	defer f.Close()
+
+	su3File, err := Read(f)
+	assert.NoError(t, err, "Failed to parse valid SU3 file")
+	assert.NotNil(t, su3File, "SU3 file should not be nil")
+
+	// The content length should be reasonable (less than our 1GB limit)
+	assert.True(t, su3File.ContentLength < 1024*1024*1024, "Content length should be within reasonable bounds")
+	assert.Greater(t, su3File.ContentLength, uint64(0), "Content length should be greater than zero")
+
+	t.Logf("Successfully parsed SU3 file with content length: %d bytes", su3File.ContentLength)
+}

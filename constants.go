@@ -6,6 +6,9 @@ import "github.com/samber/oops"
 // Moved from: su3.go
 const magicBytes = "I2Psu3"
 
+// maxContentLength defines the maximum allowed content length (1GB) to prevent DoS attacks
+const maxContentLength = 1024 * 1024 * 1024
+
 // SignatureType constants define supported signature algorithms.
 // Moved from: su3.go
 const (
@@ -57,6 +60,7 @@ var (
 	ErrMissingUnusedByte14      = oops.Errorf("missing unused byte 14")
 	ErrMissingSignerIDLength    = oops.Errorf("missing signer ID length")
 	ErrMissingContentLength     = oops.Errorf("missing content length")
+	ErrContentLengthTooLarge    = oops.Errorf("content length exceeds maximum allowed size")
 	ErrMissingUnusedByte24      = oops.Errorf("missing unused byte 24")
 	ErrMissingFileType          = oops.Errorf("missing or invalid file type")
 	ErrMissingUnusedByte26      = oops.Errorf("missing unused byte 26")

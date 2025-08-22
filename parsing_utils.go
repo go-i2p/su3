@@ -212,6 +212,10 @@ func readFileMetadata(reader io.Reader, su3 *SU3, buff *bytes.Buffer) error {
 		return ErrMissingContentLength
 	}
 	contentLen := binary.BigEndian.Uint64(contentLengthBytes[:])
+	if contentLen > maxContentLength {
+		log.WithField("content_length", contentLen).WithField("max_content_length", maxContentLength).Error("Content length exceeds maximum allowed size")
+		return ErrContentLengthTooLarge
+	}
 	su3.ContentLength = contentLen
 	buff.Write(contentLengthBytes[:])
 	log.WithField("content_length", contentLen).Debug("Content length read")
