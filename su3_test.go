@@ -403,6 +403,64 @@ func TestConcurrentSignatureReader(t *testing.T) {
 	}
 }
 
+// TestHashInclusionBoundaryConditions tests that hash computation works correctly
+// during EOF conditions and partial buffer reads, ensuring no bytes are double-counted
+func TestHashInclusionBoundaryConditions(t *testing.T) {
+	reader := bytes.NewReader(aliceSU3)
+	su3, err := Read(reader)
+	if err != nil {
+		t.Fatalf("Failed to read SU3: %v", err)
+	}
+
+	contentReader := su3.Content(&aliceFakeKey.PublicKey)
+	
+	// Read content in small chunks to test boundary conditions
+	var allContent []byte
+	buf := make([]byte, 3) // Small buffer to force multiple reads and potential EOF with partial buffer
+	
+	for {
+		n, err := contentReader.Read(buf)
+		if n > 0 {
+			allContent = append(allContent, buf[:n]...)
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			// Should not get signature verification error, this means hash was computed correctly
+			if err == ErrInvalidSignature {
+				t.Fatalf("Hash computation failed during boundary conditions: %v", err)
+			}
+			t.Fatalf("Unexpected error: %v", err)
+		}
+	}
+	
+	// Verify we got all the expected content
+	if !bytes.Equal(allContent, aliceContent) {
+		t.Fatalf("Content mismatch: got %q, want %q", allContent, aliceContent)
+	}
+
+	// Test the potential issue mentioned in audit: when EOF occurs with partial buffer read,
+	// ensure the hash is computed correctly by comparing with a direct hash
+	reader2 := bytes.NewReader(aliceSU3)
+	su3_2, err := Read(reader2)
+	if err != nil {
+		t.Fatalf("Failed to read second SU3: %v", err)
+	}
+	
+	// Read all content at once
+	contentReader2 := su3_2.Content(&aliceFakeKey.PublicKey)
+	allAtOnce, err := ioutil.ReadAll(contentReader2)
+	if err != nil {
+		t.Fatalf("Failed to read content all at once: %v", err)
+	}
+	
+	// Both methods should produce identical content
+	if !bytes.Equal(allContent, allAtOnce) {
+		t.Fatalf("Incremental vs all-at-once read mismatch")
+	}
+}
+
 func TestMain(m *testing.M) {
 	// Generate fake RSA keys for test data.
 	var err error
