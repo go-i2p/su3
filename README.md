@@ -65,10 +65,17 @@ directly to disk:
             // Handle error.
         }
 
-Note: if you want to read the content, the Content() io.Reader must be read
-*before* the Signature() io.Reader. If you read the signature first, the content
-bytes will be thrown away. If you then attempt to read the content, you will get
-an error. For clarification, see TestReadSignatureFirst.
+**Important Note on Read Order**: If you want to read both content and signature, 
+the Content() io.Reader MUST be read *before* the Signature() io.Reader. This 
+limitation exists because SU3 files are a streaming format where content and 
+signature are sequential in the file. When you read the signature first, the 
+signature reader consumes any remaining content bytes to position the stream 
+correctly. If you then try to read content, those bytes are no longer available.
+
+However, if you only need the signature (for verification without content access), 
+you can read Signature() directly without calling Content().
+
+For clarification on this behavior, see TestReadSignatureFirst.
 
 ## Usage
 
