@@ -665,3 +665,20 @@ func TestNormalContentLengthStillWorks(t *testing.T) {
 
 	t.Logf("Successfully parsed SU3 file with content length: %d bytes", su3File.ContentLength)
 }
+
+// TestVersionLengthConversionEfficiency verifies that direct cast works the same as BigEndian conversion
+func TestVersionLengthConversionEfficiency(t *testing.T) {
+	// Test various byte values to ensure both methods produce identical results
+	testValues := []byte{16, 32, 64, 128, 255}
+
+	for _, val := range testValues {
+		// Current inefficient method
+		inefficient := binary.BigEndian.Uint16([]byte{0x00, val})
+
+		// More efficient direct cast
+		efficient := uint16(val)
+
+		assert.Equal(t, inefficient, efficient,
+			"Direct cast should produce same result as BigEndian conversion for value %d", val)
+	}
+}

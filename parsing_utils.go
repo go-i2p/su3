@@ -155,7 +155,7 @@ func readLengthFields(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (uint16, u
 		log.Error("Missing version length")
 		return 0, 0, ErrMissingVersionLength
 	}
-	verLen := binary.BigEndian.Uint16([]byte{0x00, verLengthBytes[0]})
+	verLen := uint16(verLengthBytes[0])
 	if verLen < 16 {
 		log.WithField("version_length", verLen).Error("Version length too short")
 		return 0, 0, ErrVersionTooShort
