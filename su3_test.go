@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -361,6 +362,45 @@ func TestReadSignatureFirst(t *testing.T) {
 	// Reading content should give an error.
 	_, err = ioutil.ReadAll(su3.Content(&aliceFakeKey.PublicKey))
 	assert.NotNil(err)
+}
+
+// TestConcurrentSignatureReader tests that concurrent access to content and signature
+// readers doesn't cause data races (even though it may produce expected functional errors)
+func TestConcurrentSignatureReader(t *testing.T) {
+	// Run this test multiple times to increase chance of catching race conditions
+	for i := 0; i < 10; i++ {
+		reader := bytes.NewReader(aliceSU3)
+		su3, err := Read(reader)
+		if err != nil {
+			t.Fatalf("Failed to read SU3: %v", err)
+		}
+
+		var wg sync.WaitGroup
+
+		// Goroutine 1: Read content
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			contentReader := su3.Content(&aliceFakeKey.PublicKey)
+			
+			// Read content to completion (ignoring functional errors)
+			_, _ = ioutil.ReadAll(contentReader)
+		}()
+
+		// Goroutine 2: Read signature concurrently
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			signatureReader := su3.Signature()
+			
+			// Read signature to completion (ignoring functional errors)
+			_, _ = ioutil.ReadAll(signatureReader)
+		}()
+
+		wg.Wait()
+		
+		// If we get here without a race detection failure, the fix worked
+	}
 }
 
 func TestMain(m *testing.M) {

@@ -18,10 +18,13 @@ type signatureReader struct {
 }
 
 // getBytes reads and caches the signature bytes from the SU3 file.
+// Note: This method should only be called while holding the SU3 mutex.
 // Moved from: su3.go
 func (r *signatureReader) getBytes() {
 	log.Debug("Getting signature bytes")
 	// If content hasn't been read yet, throw it away.
+	// Note: We can safely access contentReader.finished here because
+	// this method is only called while holding the SU3 mutex.
 	if !r.su3.contentReader.finished {
 		log.Warn("Content not fully read, reading remaining content")
 		// Calculate how much content remains to be read
