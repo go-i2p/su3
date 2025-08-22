@@ -66,11 +66,11 @@ func (r *signatureReader) getBytes() {
 	}
 	sigBytes := make([]byte, r.su3.SignatureLength)
 	totalRead := 0
-	
+
 	for totalRead < int(r.su3.SignatureLength) {
 		n, err := reader.Read(sigBytes[totalRead:])
 		totalRead += n
-		
+
 		if err != nil {
 			if err == io.EOF {
 				// EOF before reading all signature bytes means missing signature
