@@ -480,6 +480,30 @@ func TestSignatureLengthValidation(t *testing.T) {
 	}
 }
 
+// TestHeaderHashStateConsistency verifies that hash initialization fails fast
+// for unsupported signature types, preventing inconsistent state
+func TestHeaderHashStateConsistency(t *testing.T) {
+	// This test verifies the defensive programming measure in initializeReaders
+	// Even if an unsupported signature type somehow gets through parsing,
+	// the hash initialization should fail fast rather than create inconsistent state
+
+	// We can test this by directly calling initializeReaders with an invalid type
+	su3 := &SU3{}
+	buff := &bytes.Buffer{}
+
+	// Test with an unknown signature type that's not in the switch statement
+	// (this simulates the edge case described in the audit)
+	err := initializeReaders(su3, SignatureType("UNKNOWN_TYPE"), buff)
+
+	if err == nil {
+		t.Fatal("Expected error for unknown signature type, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "unsupported signature type") {
+		t.Fatalf("Expected unsupported signature type error, got: %v", err)
+	}
+}
+
 // TestHashInclusionBoundaryConditions tests that hash computation works correctly
 // during EOF conditions and partial buffer reads, ensuring no bytes are double-counted
 func TestHashInclusionBoundaryConditions(t *testing.T) {
