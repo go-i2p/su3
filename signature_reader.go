@@ -56,19 +56,37 @@ func (r *signatureReader) getBytes() {
 		log.Debug("Marked content reader as finished after consuming remaining content")
 	}
 
-	// Read signature.
+	// Read signature directly into a pre-allocated buffer of known size.
+	// This is more efficient than ioutil.ReadAll which may allocate additional buffers
+	// and is especially beneficial for large signatures (e.g., RSA-4096).
 	reader := &fixedLengthReader{
 		length:    uint64(r.su3.SignatureLength),
 		readSoFar: 0,
 		reader:    r.su3.reader,
 	}
-	sigBytes, err := ioutil.ReadAll(reader)
+	sigBytes := make([]byte, r.su3.SignatureLength)
+	totalRead := 0
+	
+	for totalRead < int(r.su3.SignatureLength) {
+		n, err := reader.Read(sigBytes[totalRead:])
+		totalRead += n
+		
+		if err != nil {
+			if err == io.EOF {
+				// EOF before reading all signature bytes means missing signature
+				log.WithField("expected", r.su3.SignatureLength).WithField("actual", totalRead).Error("Signature shorter than expected")
+				r.err = ErrMissingSignature
+				return
+			}
+			log.WithError(err).Error("Failed to read signature")
+			r.err = oops.Errorf("reading signature: %w", err)
+			return
+		}
+	}
 
-	if err != nil {
-		log.WithError(err).Error("Failed to read signature")
-		r.err = oops.Errorf("reading signature: %w", err)
-	} else if reader.readSoFar != uint64(r.su3.SignatureLength) {
-		log.Error("Signature shorter than expected")
+	// Verify we read the expected amount
+	if totalRead != int(r.su3.SignatureLength) {
+		log.WithField("expected", r.su3.SignatureLength).WithField("actual", totalRead).Error("Signature shorter than expected")
 		r.err = ErrMissingSignature
 	} else {
 		r.bytes = sigBytes
