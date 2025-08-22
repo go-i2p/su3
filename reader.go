@@ -91,6 +91,9 @@ func initializeReaders(su3 *SU3, sigType SignatureType, buff *bytes.Buffer) erro
 	case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
 		su3.contentReader.hash = sha512.New()
 		log.Debug("Using SHA512 hash for content")
+	default:
+		log.WithField("signature_type", sigType).Error("Unsupported signature type in hash initialization")
+		return ErrUnsupportedSignatureType
 	}
 
 	if su3.contentReader.hash != nil {
