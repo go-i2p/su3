@@ -108,7 +108,16 @@ func readSignatureInfo(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (Signatur
 		return "", ErrMissingSignatureLength
 	}
 	sigLen := binary.BigEndian.Uint16(sigLengthBytes[:])
-	// TODO check that sigLen is the correct length for sigType.
+
+	// Validate signature length matches expected length for signature type
+	if err := validateSignatureLength(sigType, sigLen); err != nil {
+		log.WithFields(map[string]interface{}{
+			"signature_type":   sigType,
+			"signature_length": sigLen,
+		}).Error("Invalid signature length for signature type")
+		return "", err
+	}
+
 	su3.SignatureLength = sigLen
 	buff.Write(sigLengthBytes[:])
 	log.WithField("signature_length", sigLen).Debug("Signature length read")
@@ -333,5 +342,51 @@ func readVersionAndSignerID(reader io.Reader, su3 *SU3, buff *bytes.Buffer, verL
 	buff.Write(signerIDBytes[:])
 	log.WithField("signer_id", signerID).Debug("Signer ID read")
 
+	return nil
+}
+
+// validateSignatureLength checks if the signature length is valid for the given signature type
+func validateSignatureLength(sigType SignatureType, sigLen uint16) error {
+	switch sigType {
+	case RSA_SHA256_2048:
+		if sigLen != 256 {
+			return ErrInvalidSignatureLength
+		}
+	case RSA_SHA384_3072:
+		if sigLen != 384 {
+			return ErrInvalidSignatureLength
+		}
+	case RSA_SHA512_4096:
+		if sigLen != 512 {
+			return ErrInvalidSignatureLength
+		}
+	case DSA_SHA1:
+		// DSA signatures in DER format are typically 40-48 bytes, allow some range
+		if sigLen < 40 || sigLen > 72 {
+			return ErrInvalidSignatureLength
+		}
+	case ECDSA_SHA256_P256:
+		// ECDSA P-256 signatures in DER format, allow reasonable range
+		if sigLen < 70 || sigLen > 75 {
+			return ErrInvalidSignatureLength
+		}
+	case ECDSA_SHA384_P384:
+		// ECDSA P-384 signatures in DER format, allow reasonable range
+		if sigLen < 100 || sigLen > 108 {
+			return ErrInvalidSignatureLength
+		}
+	case ECDSA_SHA512_P521:
+		// ECDSA P-521 signatures in DER format, allow reasonable range
+		if sigLen < 137 || sigLen > 145 {
+			return ErrInvalidSignatureLength
+		}
+	case EdDSA_SHA512_Ed25519ph:
+		if sigLen != 64 {
+			return ErrInvalidSignatureLength
+		}
+	default:
+		// Unknown signature type, this should have been caught earlier
+		return ErrUnsupportedSignatureType
+	}
 	return nil
 }

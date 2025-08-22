@@ -68,6 +68,7 @@ var (
 	ErrMissingSignature         = oops.Errorf("missing signature")
 	ErrInvalidPublicKey         = oops.Errorf("invalid public key")
 	ErrInvalidSignature         = oops.Errorf("invalid signature")
+	ErrInvalidSignatureLength   = oops.Errorf("signature length invalid for signature type")
 )
 
 // Mapping tables for converting bytes to enumerated types.

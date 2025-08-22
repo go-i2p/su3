@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 
@@ -429,6 +430,54 @@ func TestDSASignatureParsingImprovement(t *testing.T) {
 	// if we had actual DSA test data, but since we only have RSA test data,
 	// we just verify that the RSA path continues to work and that the
 	// DSA parsing code would use proper DER decoding (visible in code inspection)
+}
+
+// TestSignatureLengthValidation tests that signature length validation works correctly
+// (reproduces the missing signature length validation bug fix)
+func TestSignatureLengthValidation(t *testing.T) {
+	// Test case: RSA_SHA256_2048 with incorrect signature length (should fail)
+	invalidSU3 := appendBytes(
+		[]byte("I2Psu3"),   // Magic bytes
+		[]byte{0x00},       // Unused byte 6
+		[]byte{0x00},       // File format
+		[]byte{0x00, 0x04}, // Signature type RSA_SHA256_2048
+		[]byte{0x00, 0x80}, // Invalid signature length (128 instead of 256)
+		[]byte{0x00},       // Unused byte 12
+		[]byte{0x10},       // Version length 16
+		[]byte{0x00},       // Unused byte 14
+		[]byte{0x05},       // Signer ID length 5
+		[]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0B}, // Content length (11 bytes)
+		[]byte{0x00}, // Unused byte 24
+		[]byte{0x02}, // File type HTML
+		[]byte{0x00}, // Unused byte 26
+		[]byte{0x00}, // Content type unknown
+		[]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // Unused bytes 28-39
+		appendBytes([]byte("1234567890"), []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),  // Version with padding
+		[]byte("alice"), // Signer ID
+	)
+
+	reader := bytes.NewReader(invalidSU3)
+	_, err := Read(reader)
+
+	// Should fail with signature length validation error
+	if err == nil {
+		t.Fatal("Expected signature length validation error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "signature length invalid for signature type") {
+		t.Fatalf("Expected signature length validation error, got: %v", err)
+	}
+
+	// Test case: Valid RSA_SHA256_2048 signature length (should pass)
+	validReader := bytes.NewReader(aliceSU3)
+	su3, err := Read(validReader)
+	if err != nil {
+		t.Fatalf("Valid signature length should not cause error: %v", err)
+	}
+
+	if su3.SignatureLength != 256 {
+		t.Fatalf("Expected signature length 256, got %d", su3.SignatureLength)
+	}
 }
 
 // TestHashInclusionBoundaryConditions tests that hash computation works correctly
