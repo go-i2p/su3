@@ -682,3 +682,40 @@ func TestVersionLengthConversionEfficiency(t *testing.T) {
 			"Direct cast should produce same result as BigEndian conversion for value %d", val)
 	}
 }
+
+// TestSignatureBufferPreallocationBounds verifies that signature length validation provides reasonable bounds
+func TestSignatureBufferPreallocationBounds(t *testing.T) {
+	// Test that existing validation catches unreasonable signature lengths
+	testCases := []struct {
+		sigType     SignatureType
+		sigLen      uint16
+		shouldPass  bool
+		description string
+	}{
+		{RSA_SHA256_2048, 256, true, "Valid RSA-2048 signature length"},
+		{RSA_SHA384_3072, 384, true, "Valid RSA-3072 signature length"},
+		{RSA_SHA512_4096, 512, true, "Valid RSA-4096 signature length"},
+		{EdDSA_SHA512_Ed25519ph, 64, true, "Valid EdDSA signature length"},
+		{RSA_SHA256_2048, 1000, false, "Invalid oversized RSA signature"},
+		{EdDSA_SHA512_Ed25519ph, 200, false, "Invalid oversized EdDSA signature"},
+		{ECDSA_SHA256_P256, 1000, false, "Invalid oversized ECDSA signature"},
+	}
+
+	for _, tc := range testCases {
+		err := validateSignatureLength(tc.sigType, tc.sigLen)
+		if tc.shouldPass {
+			assert.NoError(t, err, "Should pass: %s", tc.description)
+		} else {
+			assert.Error(t, err, "Should fail: %s", tc.description)
+		}
+	}
+
+	// The maximum valid signature length in our system should be RSA-4096 = 512 bytes
+	// This is a reasonable upper bound for defense in depth
+	maxValidSigLen := uint16(512)
+	t.Logf("Maximum valid signature length in current system: %d bytes", maxValidSigLen)
+
+	// Test that our defense-in-depth bound (1024) is reasonable
+	assert.True(t, maxSignatureLength > maxValidSigLen, "Defense-in-depth bound should be higher than max valid signature length")
+	assert.True(t, maxSignatureLength < 10000, "Defense-in-depth bound should still be reasonable to prevent abuse")
+}

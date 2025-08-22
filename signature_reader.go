@@ -64,6 +64,14 @@ func (r *signatureReader) getBytes() {
 		readSoFar: 0,
 		reader:    r.su3.reader,
 	}
+
+	// Defense in depth: additional bounds check before buffer allocation
+	if r.su3.SignatureLength > maxSignatureLength {
+		log.WithField("signature_length", r.su3.SignatureLength).WithField("max_signature_length", maxSignatureLength).Error("Signature length exceeds maximum allowed size")
+		r.err = ErrSignatureLengthTooLarge
+		return
+	}
+
 	sigBytes := make([]byte, r.su3.SignatureLength)
 	totalRead := 0
 
