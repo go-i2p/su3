@@ -46,6 +46,28 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 		return 0, oops.Errorf("out of bytes, maybe you read the signature before you read the content")
 	}
 
+	if err := r.ensureReaderInitialized(); err != nil {
+		return 0, err
+	}
+
+	l, err := r.readContentBytes(p)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return l, err
+	}
+
+	r.updateHashWithBytes(p[:l])
+
+	if r.finished {
+		if verifyErr := r.performSignatureVerification(); verifyErr != nil {
+			return l, verifyErr
+		}
+	}
+
+	return l, err
+}
+
+// ensureReaderInitialized initializes the fixed-length reader if not already done.
+func (r *contentReader) ensureReaderInitialized() error {
 	if r.reader == nil {
 		r.reader = &fixedLengthReader{
 			length:    r.su3.ContentLength,
@@ -54,7 +76,11 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 		}
 		log.WithField("content_length", r.su3.ContentLength).Debug("Initialized content reader")
 	}
+	return nil
+}
 
+// readContentBytes reads content bytes from the underlying reader and handles EOF conditions.
+func (r *contentReader) readContentBytes(p []byte) (int, error) {
 	l, err := r.reader.Read(p)
 
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -68,200 +94,148 @@ func (r *contentReader) Read(p []byte) (n int, err error) {
 		log.Debug("Finished reading content")
 	}
 
-	if r.hash != nil {
-		r.hash.Write(p[:l])
-	}
-
-	if r.finished {
-		if r.su3.publicKey == nil {
-			log.Error("No public key provided for signature verification")
-			return l, ErrInvalidSignature
-		}
-		r.su3.signatureReader.getBytes()
-		if r.su3.signatureReader.err != nil {
-			log.WithError(r.su3.signatureReader.err).Error("Failed to get signature bytes")
-			return l, r.su3.signatureReader.err
-		}
-		log.WithField("signature_type", r.su3.SignatureType).Debug("Verifying signature")
-		// TODO support all signature types
-		switch r.su3.SignatureType {
-		case RSA_SHA256_2048:
-			var pubKey *rsa.PublicKey
-			if k, ok := r.su3.publicKey.(*rsa.PublicKey); !ok {
-				log.Error("Invalid public key type")
-				return l, ErrInvalidPublicKey
-			} else {
-				pubKey = k
-			}
-			err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA256, r.hash.Sum(nil), r.su3.signatureReader.bytes)
-			if err != nil {
-				log.WithError(err).Error("Signature verification failed")
-				return l, ErrInvalidSignature
-			}
-			log.Debug("Signature verified successfully")
-		case RSA_SHA384_3072:
-			var pubKey *rsa.PublicKey
-			if k, ok := r.su3.publicKey.(*rsa.PublicKey); !ok {
-				log.Error("Invalid public key type")
-				return l, ErrInvalidPublicKey
-			} else {
-				pubKey = k
-			}
-			err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA384, r.hash.Sum(nil), r.su3.signatureReader.bytes)
-			if err != nil {
-				log.WithError(err).Error("Signature verification failed")
-				return l, ErrInvalidSignature
-			}
-			log.Debug("Signature verified successfully")
-		case RSA_SHA512_4096:
-			var pubKey *rsa.PublicKey
-			if k, ok := r.su3.publicKey.(*rsa.PublicKey); !ok {
-				log.Error("Invalid public key type")
-				return l, ErrInvalidPublicKey
-			} else {
-				pubKey = k
-			}
-			err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA512, r.hash.Sum(nil), r.su3.signatureReader.bytes)
-			if err != nil {
-				log.WithError(err).Error("Signature verification failed")
-				return l, ErrInvalidSignature
-			}
-			log.Debug("Signature verified successfully")
-		case DSA_SHA1:
-			var pubKey *dsa.PublicKey
-			if k, ok := r.su3.publicKey.(*dsa.PublicKey); !ok {
-				log.Error("Invalid public key type")
-				return l, ErrInvalidPublicKey
-			} else {
-				pubKey = k
-			}
-			// DSA signature should be in DER-encoded ASN.1 format
-			sigBytes := r.su3.signatureReader.bytes
-			if len(sigBytes) < 8 {
-				log.Error("DSA signature too short")
-				return l, ErrInvalidSignature
-			}
-
-			// Parse DER-encoded DSA signature
-			var dsaSig dsaSignature
-			_, err := asn1.Unmarshal(sigBytes, &dsaSig)
-			if err != nil {
-				log.WithError(err).Error("Failed to parse DSA signature DER encoding")
-				return l, ErrInvalidSignature
-			}
-
-			verified := dsa.Verify(pubKey, r.hash.Sum(nil), dsaSig.R, dsaSig.S)
-			if !verified {
-				log.Error("DSA signature verification failed")
-				return l, ErrInvalidSignature
-			}
-			log.Debug("DSA signature verified successfully")
-		case ECDSA_SHA256_P256:
-			var pubKey *ecdsa.PublicKey
-			if k, ok := r.su3.publicKey.(*ecdsa.PublicKey); !ok {
-				log.Error("Invalid public key type")
-				return l, ErrInvalidPublicKey
-			} else {
-				pubKey = k
-			}
-			// ECDSA signature should be in DER-encoded ASN.1 format
-			sigBytes := r.su3.signatureReader.bytes
-			if len(sigBytes) < 8 {
-				log.Error("ECDSA signature too short")
-				return l, ErrInvalidSignature
-			}
-
-			// Parse DER-encoded ECDSA signature
-			var ecdsaSig ecdsaSignature
-			_, err := asn1.Unmarshal(sigBytes, &ecdsaSig)
-			if err != nil {
-				log.WithError(err).Error("Failed to parse ECDSA signature DER encoding")
-				return l, ErrInvalidSignature
-			}
-
-			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), ecdsaSig.R, ecdsaSig.S)
-			if !verified {
-				log.Error("ECDSA-SHA256-P256 signature verification failed")
-				return l, ErrInvalidSignature
-			}
-			log.Debug("ECDSA-SHA256-P256 signature verified successfully")
-		case ECDSA_SHA384_P384:
-			var pubKey *ecdsa.PublicKey
-			if k, ok := r.su3.publicKey.(*ecdsa.PublicKey); !ok {
-				log.Error("Invalid public key type")
-				return l, ErrInvalidPublicKey
-			} else {
-				pubKey = k
-			}
-			// ECDSA signature should be in DER-encoded ASN.1 format
-			sigBytes := r.su3.signatureReader.bytes
-			if len(sigBytes) < 8 {
-				log.Error("ECDSA signature too short")
-				return l, ErrInvalidSignature
-			}
-
-			// Parse DER-encoded ECDSA signature
-			var ecdsaSig ecdsaSignature
-			_, err := asn1.Unmarshal(sigBytes, &ecdsaSig)
-			if err != nil {
-				log.WithError(err).Error("Failed to parse ECDSA signature DER encoding")
-				return l, ErrInvalidSignature
-			}
-
-			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), ecdsaSig.R, ecdsaSig.S)
-			if !verified {
-				log.Error("ECDSA-SHA384-P384 signature verification failed")
-				return l, ErrInvalidSignature
-			}
-			log.Debug("ECDSA-SHA384-P384 signature verified successfully")
-		case ECDSA_SHA512_P521:
-			var pubKey *ecdsa.PublicKey
-			if k, ok := r.su3.publicKey.(*ecdsa.PublicKey); !ok {
-				log.Error("Invalid public key type")
-				return l, ErrInvalidPublicKey
-			} else {
-				pubKey = k
-			}
-			// ECDSA signature should be in DER-encoded ASN.1 format
-			sigBytes := r.su3.signatureReader.bytes
-			if len(sigBytes) < 8 {
-				log.Error("ECDSA signature too short")
-				return l, ErrInvalidSignature
-			}
-
-			// Parse DER-encoded ECDSA signature
-			var ecdsaSig ecdsaSignature
-			_, err := asn1.Unmarshal(sigBytes, &ecdsaSig)
-			if err != nil {
-				log.WithError(err).Error("Failed to parse ECDSA signature DER encoding")
-				return l, ErrInvalidSignature
-			}
-
-			verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), ecdsaSig.R, ecdsaSig.S)
-			if !verified {
-				log.Error("ECDSA-SHA512-P521 signature verification failed")
-				return l, ErrInvalidSignature
-			}
-			log.Debug("ECDSA-SHA512-P521 signature verified successfully")
-		case EdDSA_SHA512_Ed25519ph:
-			var pubKey ed25519.PublicKey
-			if k, ok := r.su3.publicKey.(ed25519.PublicKey); !ok {
-				log.Error("Invalid public key type")
-				return l, ErrInvalidPublicKey
-			} else {
-				pubKey = k
-			}
-			verified := ed25519.Verify(pubKey, r.hash.Sum(nil), r.su3.signatureReader.bytes)
-			if !verified {
-				log.Error("EdDSA-SHA512-Ed25519ph signature verification failed")
-				return l, ErrInvalidSignature
-			}
-			log.Debug("EdDSA-SHA512-Ed25519ph signature verified successfully")
-		default:
-			log.WithField("signature_type", r.su3.SignatureType).Error("Unsupported signature type")
-			return l, ErrUnsupportedSignatureType
-		}
-	}
-
 	return l, err
+}
+
+// updateHashWithBytes writes the read bytes to the hash if it's available.
+func (r *contentReader) updateHashWithBytes(data []byte) {
+	if r.hash != nil {
+		r.hash.Write(data)
+	}
+}
+
+// performSignatureVerification verifies the signature after content reading is complete.
+func (r *contentReader) performSignatureVerification() error {
+	if r.su3.publicKey == nil {
+		log.Error("No public key provided for signature verification")
+		return ErrInvalidSignature
+	}
+
+	r.su3.signatureReader.getBytes()
+	if r.su3.signatureReader.err != nil {
+		log.WithError(r.su3.signatureReader.err).Error("Failed to get signature bytes")
+		return r.su3.signatureReader.err
+	}
+
+	log.WithField("signature_type", r.su3.SignatureType).Debug("Verifying signature")
+	return r.verifySignatureByType()
+}
+
+// verifySignatureByType performs signature verification based on the signature type.
+func (r *contentReader) verifySignatureByType() error {
+	switch r.su3.SignatureType {
+	case RSA_SHA256_2048:
+		return r.verifyRSASignature(crypto.SHA256)
+	case RSA_SHA384_3072:
+		return r.verifyRSASignature(crypto.SHA384)
+	case RSA_SHA512_4096:
+		return r.verifyRSASignature(crypto.SHA512)
+	case DSA_SHA1:
+		return r.verifyDSASignature()
+	case ECDSA_SHA256_P256:
+		return r.verifyECDSASignature("ECDSA-SHA256-P256")
+	case ECDSA_SHA384_P384:
+		return r.verifyECDSASignature("ECDSA-SHA384-P384")
+	case ECDSA_SHA512_P521:
+		return r.verifyECDSASignature("ECDSA-SHA512-P521")
+	case EdDSA_SHA512_Ed25519ph:
+		return r.verifyEdDSASignature()
+	default:
+		log.WithField("signature_type", r.su3.SignatureType).Error("Unsupported signature type")
+		return ErrUnsupportedSignatureType
+	}
+}
+
+// verifyRSASignature verifies RSA signatures with the specified hash algorithm.
+func (r *contentReader) verifyRSASignature(hashAlgorithm crypto.Hash) error {
+	pubKey, ok := r.su3.publicKey.(*rsa.PublicKey)
+	if !ok {
+		log.Error("Invalid public key type")
+		return ErrInvalidPublicKey
+	}
+
+	err := rsa.VerifyPKCS1v15(pubKey, hashAlgorithm, r.hash.Sum(nil), r.su3.signatureReader.bytes)
+	if err != nil {
+		log.WithError(err).Error("Signature verification failed")
+		return ErrInvalidSignature
+	}
+	log.Debug("Signature verified successfully")
+	return nil
+}
+
+// verifyDSASignature verifies DSA-SHA1 signatures.
+func (r *contentReader) verifyDSASignature() error {
+	pubKey, ok := r.su3.publicKey.(*dsa.PublicKey)
+	if !ok {
+		log.Error("Invalid public key type")
+		return ErrInvalidPublicKey
+	}
+
+	sigBytes := r.su3.signatureReader.bytes
+	if len(sigBytes) < 8 {
+		log.Error("DSA signature too short")
+		return ErrInvalidSignature
+	}
+
+	var dsaSig dsaSignature
+	_, err := asn1.Unmarshal(sigBytes, &dsaSig)
+	if err != nil {
+		log.WithError(err).Error("Failed to parse DSA signature DER encoding")
+		return ErrInvalidSignature
+	}
+
+	verified := dsa.Verify(pubKey, r.hash.Sum(nil), dsaSig.R, dsaSig.S)
+	if !verified {
+		log.Error("DSA signature verification failed")
+		return ErrInvalidSignature
+	}
+	log.Debug("DSA signature verified successfully")
+	return nil
+}
+
+// verifyECDSASignature verifies ECDSA signatures with the specified curve type.
+func (r *contentReader) verifyECDSASignature(curveType string) error {
+	pubKey, ok := r.su3.publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		log.Error("Invalid public key type")
+		return ErrInvalidPublicKey
+	}
+
+	sigBytes := r.su3.signatureReader.bytes
+	if len(sigBytes) < 8 {
+		log.Error("ECDSA signature too short")
+		return ErrInvalidSignature
+	}
+
+	var ecdsaSig ecdsaSignature
+	_, err := asn1.Unmarshal(sigBytes, &ecdsaSig)
+	if err != nil {
+		log.WithError(err).Error("Failed to parse ECDSA signature DER encoding")
+		return ErrInvalidSignature
+	}
+
+	verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), ecdsaSig.R, ecdsaSig.S)
+	if !verified {
+		log.WithField("curve_type", curveType).Error("ECDSA signature verification failed")
+		return ErrInvalidSignature
+	}
+	log.WithField("curve_type", curveType).Debug("ECDSA signature verified successfully")
+	return nil
+}
+
+// verifyEdDSASignature verifies EdDSA-SHA512-Ed25519ph signatures.
+func (r *contentReader) verifyEdDSASignature() error {
+	pubKey, ok := r.su3.publicKey.(ed25519.PublicKey)
+	if !ok {
+		log.Error("Invalid public key type")
+		return ErrInvalidPublicKey
+	}
+
+	verified := ed25519.Verify(pubKey, r.hash.Sum(nil), r.su3.signatureReader.bytes)
+	if !verified {
+		log.Error("EdDSA-SHA512-Ed25519ph signature verification failed")
+		return ErrInvalidSignature
+	}
+	log.Debug("EdDSA-SHA512-Ed25519ph signature verified successfully")
+	return nil
 }
