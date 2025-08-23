@@ -3,7 +3,6 @@ package su3
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 
 	"github.com/samber/oops"
 )
@@ -22,6 +21,29 @@ type signatureReader struct {
 // Moved from: su3.go
 func (r *signatureReader) getBytes() {
 	log.Debug("Getting signature bytes")
+
+	if err := r.consumeRemainingContent(); err != nil {
+		r.err = err
+		return
+	}
+
+	if err := r.validateSignatureBounds(); err != nil {
+		r.err = err
+		return
+	}
+
+	sigBytes, err := r.readSignatureBytes()
+	if err != nil {
+		r.err = err
+		return
+	}
+
+	r.finalizeSignatureReader(sigBytes)
+}
+
+// consumeRemainingContent handles any unread content before reading signature.
+// This ensures the stream is positioned correctly for signature reading.
+func (r *signatureReader) consumeRemainingContent() error {
 	// If content hasn't been read yet, throw it away.
 	// Note: We can safely access contentReader.finished here because
 	// this method is only called while holding the SU3 mutex.
@@ -44,32 +66,37 @@ func (r *signatureReader) getBytes() {
 				readSoFar: 0,
 				reader:    r.su3.reader,
 			}
-			_, err := ioutil.ReadAll(contentReader)
+			_, err := io.ReadAll(contentReader)
 			if err != nil {
 				log.WithError(err).Error("Failed to read remaining content")
-				r.err = oops.Errorf("reading content: %w", err)
-				return
+				return oops.Errorf("reading content: %w", err)
 			}
 		}
 		// Mark content as finished
 		r.su3.contentReader.finished = true
 		log.Debug("Marked content reader as finished after consuming remaining content")
 	}
+	return nil
+}
 
-	// Read signature directly into a pre-allocated buffer of known size.
-	// This is more efficient than ioutil.ReadAll which may allocate additional buffers
-	// and is especially beneficial for large signatures (e.g., RSA-4096).
+// validateSignatureBounds checks if signature length is within acceptable limits.
+// Defense in depth: additional bounds check before buffer allocation.
+func (r *signatureReader) validateSignatureBounds() error {
+	if r.su3.SignatureLength > maxSignatureLength {
+		log.WithField("signature_length", r.su3.SignatureLength).WithField("max_signature_length", maxSignatureLength).Error("Signature length exceeds maximum allowed size")
+		return ErrSignatureLengthTooLarge
+	}
+	return nil
+}
+
+// readSignatureBytes reads the signature data from the underlying reader.
+// This is more efficient than ioutil.ReadAll which may allocate additional buffers
+// and is especially beneficial for large signatures (e.g., RSA-4096).
+func (r *signatureReader) readSignatureBytes() ([]byte, error) {
 	reader := &fixedLengthReader{
 		length:    uint64(r.su3.SignatureLength),
 		readSoFar: 0,
 		reader:    r.su3.reader,
-	}
-
-	// Defense in depth: additional bounds check before buffer allocation
-	if r.su3.SignatureLength > maxSignatureLength {
-		log.WithField("signature_length", r.su3.SignatureLength).WithField("max_signature_length", maxSignatureLength).Error("Signature length exceeds maximum allowed size")
-		r.err = ErrSignatureLengthTooLarge
-		return
 	}
 
 	sigBytes := make([]byte, r.su3.SignatureLength)
@@ -83,24 +110,30 @@ func (r *signatureReader) getBytes() {
 			if err == io.EOF {
 				// EOF before reading all signature bytes means missing signature
 				log.WithField("expected", r.su3.SignatureLength).WithField("actual", totalRead).Error("Signature shorter than expected")
-				r.err = ErrMissingSignature
-				return
+				return nil, ErrMissingSignature
 			}
 			log.WithError(err).Error("Failed to read signature")
-			r.err = oops.Errorf("reading signature: %w", err)
-			return
+			return nil, oops.Errorf("reading signature: %w", err)
 		}
 	}
 
-	// Verify we read the expected amount
+	return r.verifySignatureBytesRead(sigBytes, totalRead)
+}
+
+// verifySignatureBytesRead ensures we read the expected amount of signature data.
+func (r *signatureReader) verifySignatureBytesRead(sigBytes []byte, totalRead int) ([]byte, error) {
 	if totalRead != int(r.su3.SignatureLength) {
 		log.WithField("expected", r.su3.SignatureLength).WithField("actual", totalRead).Error("Signature shorter than expected")
-		r.err = ErrMissingSignature
-	} else {
-		r.bytes = sigBytes
-		r.reader = bytes.NewReader(sigBytes)
-		log.WithField("signature_length", len(sigBytes)).Debug("Signature bytes read successfully")
+		return nil, ErrMissingSignature
 	}
+	return sigBytes, nil
+}
+
+// finalizeSignatureReader configures the reader with the signature bytes.
+func (r *signatureReader) finalizeSignatureReader(sigBytes []byte) {
+	r.bytes = sigBytes
+	r.reader = bytes.NewReader(sigBytes)
+	log.WithField("signature_length", len(sigBytes)).Debug("Signature bytes read successfully")
 }
 
 // Read implements io.Reader interface for signatureReader.
