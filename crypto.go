@@ -4,7 +4,6 @@ import (
 	"crypto"
 	"crypto/dsa"
 	"crypto/ecdsa"
-	"github.com/go-i2p/crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -16,6 +15,8 @@ import (
 	"hash"
 	"math/big"
 	"time"
+
+	"github.com/go-i2p/crypto/rand"
 
 	"github.com/samber/oops"
 )
@@ -37,7 +38,7 @@ func NewSigningCertificate(signerID string, privateKey *rsa.PrivateKey) ([]byte,
 	}
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	serialNumber, err := rand.CryptoInt(rand.Reader, serialNumberLimit)
 	if err != nil {
 		log.WithError(err).Error("Failed to generate certificate serial number")
 		return nil, oops.Errorf("generating certificate serial number: %w", err)
