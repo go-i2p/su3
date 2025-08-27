@@ -93,6 +93,8 @@ var (
 	ErrMissingUnusedByte14      = oops.Errorf("missing unused byte 14")
 	ErrMissingSignerIDLength    = oops.Errorf("missing signer ID length")
 	ErrMissingContentLength     = oops.Errorf("missing content length")
+	ErrContentLengthTooLarge    = oops.Errorf("content length exceeds maximum allowed size")
+	ErrSignatureLengthTooLarge  = oops.Errorf("signature length exceeds maximum allowed size")
 	ErrMissingUnusedByte24      = oops.Errorf("missing unused byte 24")
 	ErrMissingFileType          = oops.Errorf("missing or invalid file type")
 	ErrMissingUnusedByte26      = oops.Errorf("missing unused byte 26")
@@ -104,6 +106,7 @@ var (
 	ErrMissingSignature         = oops.Errorf("missing signature")
 	ErrInvalidPublicKey         = oops.Errorf("invalid public key")
 	ErrInvalidSignature         = oops.Errorf("invalid signature")
+	ErrInvalidSignatureLength   = oops.Errorf("signature length invalid for signature type")
 )
 ```
 
