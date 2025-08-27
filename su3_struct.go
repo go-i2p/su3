@@ -37,28 +37,66 @@ type SU3 struct {
 }
 
 // Content returns an io.Reader for accessing the SU3 file content.
-// The publicKey parameter is used for signature verification.
+// The publicKey parameter is used for signature verification during reading.
+// If publicKey is nil, content can be read but ErrInvalidSignature will be returned.
+//
+// CRITICAL READ ORDER REQUIREMENT:
+// If you want to read both content and signature, the Content() io.Reader MUST
+// be read *before* the Signature() io.Reader. This limitation exists because
+// SU3 files are a streaming format where content and signature are sequential.
+//
+// SIDE EFFECTS OF READING SIGNATURE() FIRST:
+// When you read from Signature() before reading Content(), the signature reader
+// will automatically consume and discard ALL remaining content bytes to position
+// the stream correctly for signature reading. This means:
+//   - Any unread content data is permanently lost
+//   - Subsequent calls to Content() will return an empty reader
+//   - No error is generated, but content access is no longer possible
+//
+// WORKAROUNDS:
+//  1. Always read Content() before Signature() if you need both
+//  2. If you only need signature verification without content access,
+//     you can safely read Signature() directly
+//  3. For scenarios requiring signature-first access, consider using
+//     bytes.Buffer or similar to fully buffer the SU3 data first
+//
+// EXAMPLE - Correct order for accessing both:
+//
+//	contentReader := su3File.Content(publicKey)
+//	content, err := io.ReadAll(contentReader)  // Read content first
+//	if err != nil { /* handle error */ }
+//
+//	signatureReader := su3File.Signature()     // Now safe to read signature
+//	signature, err := io.ReadAll(signatureReader)
+//
+// For test cases demonstrating this behavior, see TestReadSignatureFirst.
 // Moved from: su3.go
-/**
-**Important Note on Read Order**: If you want to read both content and signature,
-the Content() io.Reader MUST be read *before* the Signature() io.Reader. This
-limitation exists because SU3 files are a streaming format where content and
-signature are sequential in the file. When you read the signature first, the
-signature reader consumes any remaining content bytes to position the stream
-correctly. If you then try to read content, those bytes are no longer available.
-
-However, if you only need the signature (for verification without content access),
-you can read Signature() directly without calling Content().
-
-For clarification on this behavior, see TestReadSignatureFirst.
-*/
 func (su3 *SU3) Content(publicKey interface{}) io.Reader {
 	log.WithField("signer_id", su3.SignerID).Debug("Accessing SU3 content")
 	su3.publicKey = publicKey
 	return su3.contentReader
 }
 
-// Signature returns an io.Reader for accessing the SU3 file signature.
+// Signature returns an io.Reader for accessing the SU3 file signature bytes.
+//
+// IMPORTANT STREAMING BEHAVIOR:
+// Reading from this signature reader will automatically consume any unread
+// content bytes from the underlying stream to correctly position for signature
+// reading. This has the following implications:
+//
+//   - If Content() has not been fully read, all remaining content data
+//     will be discarded when Signature() is first accessed
+//   - This makes subsequent Content() calls return empty readers
+//   - No error occurs, but content access becomes impossible
+//
+// USAGE PATTERNS:
+// 1. Signature-only access (safe): Call Signature() directly without Content()
+// 2. Both content and signature: Read Content() completely before Signature()
+// 3. Manual verification workflows: Read signature bytes for custom crypto
+//
+// The signature reader provides the raw signature bytes as stored in the SU3 file.
+// For automatic signature verification, use Content(publicKey) instead.
+//
 // Moved from: su3.go
 func (su3 *SU3) Signature() io.Reader {
 	log.Debug("Accessing SU3 signature")

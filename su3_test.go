@@ -827,7 +827,7 @@ func TestBug4HashAlgorithmConsistency(t *testing.T) {
 			// and produce identical results
 			hash1, err1 := getHashForSignatureType(tc.sigType)
 			assert.NoError(t, err1)
-			
+
 			cryptoHash, err2 := getCryptoHashForSignatureType(tc.sigType)
 			assert.NoError(t, err2)
 			hash2 := cryptoHash.New()
@@ -840,11 +840,11 @@ func TestBug4HashAlgorithmConsistency(t *testing.T) {
 			creationDigest := hash2.Sum(nil)
 
 			// Verify both approaches produce identical results
-			assert.Equal(t, readerDigest, creationDigest, 
+			assert.Equal(t, readerDigest, creationDigest,
 				"Hash digests should be identical for signature type %s", tc.sigType)
 		})
 	}
-}// TestBug4HashAlgorithmConsistencyFixed verifies that the refactored hash algorithm
+} // TestBug4HashAlgorithmConsistencyFixed verifies that the refactored hash algorithm
 // selection uses centralized helper functions for consistency.
 func TestBug4HashAlgorithmConsistencyFixed(t *testing.T) {
 	testCases := []SignatureType{
