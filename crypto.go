@@ -6,10 +6,14 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"fmt"
+	"hash"
 	"math/big"
 	"time"
 
@@ -168,4 +172,46 @@ func checkSignature(c *x509.Certificate, algo x509.SignatureAlgorithm, signed, s
 	}
 	log.WithField("public_key_type", fmt.Sprintf("%T", c.PublicKey)).Error("Unsupported public key algorithm")
 	return x509.ErrUnsupportedAlgorithm
+}
+
+// getHashForSignatureType returns the appropriate hash.Hash implementation for the given signature type.
+// This centralizes the hash algorithm selection logic used by both parsing and creation code paths.
+//
+// This function replaces the duplicate switch statements in reader.go and su3_struct.go to ensure
+// consistent hash algorithm selection across the codebase.
+func getHashForSignatureType(sigType SignatureType) (hash.Hash, error) {
+	switch sigType {
+	case DSA_SHA1:
+		return sha1.New(), nil
+	case ECDSA_SHA256_P256, RSA_SHA256_2048:
+		return sha256.New(), nil
+	case ECDSA_SHA384_P384, RSA_SHA384_3072:
+		return sha512.New384(), nil
+	case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
+		return sha512.New(), nil
+	default:
+		log.WithField("signature_type", sigType).Error("Unsupported signature type for hash selection")
+		return nil, ErrUnsupportedSignatureType
+	}
+}
+
+// getCryptoHashForSignatureType returns the appropriate crypto.Hash constant for the given signature type.
+// This is used when we need the hash type constant rather than a hash.Hash instance.
+//
+// This function complements getHashForSignatureType and ensures consistent hash type mapping
+// across both parsing and creation code paths.
+func getCryptoHashForSignatureType(sigType SignatureType) (crypto.Hash, error) {
+	switch sigType {
+	case DSA_SHA1:
+		return crypto.SHA1, nil
+	case ECDSA_SHA256_P256, RSA_SHA256_2048:
+		return crypto.SHA256, nil
+	case ECDSA_SHA384_P384, RSA_SHA384_3072:
+		return crypto.SHA384, nil
+	case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
+		return crypto.SHA512, nil
+	default:
+		log.WithField("signature_type", sigType).Error("Unsupported signature type for crypto hash selection")
+		return 0, ErrUnsupportedSignatureType
+	}
 }

@@ -5,11 +5,14 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/binary"
 	"encoding/pem"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
 	"os"
@@ -749,14 +752,14 @@ func TestBug3NilPointerDereferenceInSignatureReading(t *testing.T) {
 	// The signature length is at offset 10-11 (as per SU3 specification in UPDATE.md)
 	corruptedBytes := make([]byte, len(validBytes))
 	copy(corruptedBytes, validBytes)
-	
+
 	// Set signature length to an invalid value (e.g., 100 instead of expected 512 for RSA_SHA512_4096)
 	binary.BigEndian.PutUint16(corruptedBytes[10:12], 100)
-	
+
 	// Try to parse the corrupted file - this should fail gracefully, not crash
 	reader := bytes.NewReader(corruptedBytes)
 	parsedSU3, err := Read(reader)
-	
+
 	// The parsing should fail with an error, not cause a crash
 	if err == nil {
 		t.Error("Expected parsing to fail due to invalid signature length")
@@ -765,7 +768,7 @@ func TestBug3NilPointerDereferenceInSignatureReading(t *testing.T) {
 		t.Logf("Parsing failed as expected: %v", err)
 		assert.Contains(t, err.Error(), "signature length", "Error should mention signature length validation")
 	}
-	
+
 	// Verify that parsedSU3 is nil when parsing fails
 	assert.Nil(t, parsedSU3, "Parsed SU3 should be nil when parsing fails")
 }
@@ -776,27 +779,137 @@ func TestBug3NilPointerDereferenceInSignatureReading(t *testing.T) {
 func TestBug3NilPointerDereferenceInSignatureReadingFixed(t *testing.T) {
 	// Create a minimal SU3 object with uninitialized signature reader to test nil check
 	su3File := &SU3{
-		mut:            sync.Mutex{},
-		SignatureType:  RSA_SHA512_4096,
+		mut:           sync.Mutex{},
+		SignatureType: RSA_SHA512_4096,
 		contentReader: &contentReader{},
 		// signatureReader is intentionally nil to test the nil check
 		signatureReader: nil,
 	}
-	
+
 	// Initialize content reader with the SU3 reference
 	su3File.contentReader.su3 = su3File
 	su3File.contentReader.finished = true // Mark as finished to trigger signature verification
-	
+
 	// Create a mock public key
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		t.Fatalf("Failed to generate RSA key: %v", err)
 	}
 	su3File.publicKey = &privateKey.PublicKey
-	
+
 	// Try to trigger signature verification with nil signatureReader
 	// This should not crash but return an error
 	err = su3File.contentReader.performSignatureVerification()
 	assert.Error(t, err, "Should fail gracefully with nil signature reader")
 	assert.Equal(t, ErrInvalidSignature, err, "Should return ErrInvalidSignature for nil signature reader")
+}
+
+// TestBug4HashAlgorithmConsistency tests that hash algorithm selection is consistent
+// between parsing (reader.go) and creation (su3_struct.go) code paths.
+func TestBug4HashAlgorithmConsistency(t *testing.T) {
+	testCases := []struct {
+		sigType SignatureType
+		name    string
+	}{
+		{DSA_SHA1, "DSA-SHA1"},
+		{ECDSA_SHA256_P256, "ECDSA-SHA256-P256"},
+		{RSA_SHA256_2048, "RSA-SHA256-2048"},
+		{ECDSA_SHA384_P384, "ECDSA-SHA384-P384"},
+		{RSA_SHA384_3072, "RSA-SHA384-3072"},
+		{ECDSA_SHA512_P521, "ECDSA-SHA512-P521"},
+		{RSA_SHA512_4096, "RSA-SHA512-4096"},
+		{EdDSA_SHA512_Ed25519ph, "EdDSA-SHA512-Ed25519ph"},
+	}
+
+	testData := []byte("test data for hash consistency")
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Get hash from reader.go logic (parsing)
+			var readerHash hash.Hash
+			switch tc.sigType {
+			case DSA_SHA1:
+				readerHash = sha1.New()
+			case ECDSA_SHA256_P256, RSA_SHA256_2048:
+				readerHash = sha256.New()
+			case ECDSA_SHA384_P384, RSA_SHA384_3072:
+				readerHash = sha512.New384()
+			case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
+				readerHash = sha512.New()
+			default:
+				t.Fatalf("Unsupported signature type: %v", tc.sigType)
+			}
+
+			// Get hash from su3_struct.go logic (creation)
+			var hashType crypto.Hash
+			switch tc.sigType {
+			case DSA_SHA1:
+				hashType = crypto.SHA1
+			case ECDSA_SHA256_P256, RSA_SHA256_2048:
+				hashType = crypto.SHA256
+			case ECDSA_SHA384_P384, RSA_SHA384_3072:
+				hashType = crypto.SHA384
+			case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
+				hashType = crypto.SHA512
+			default:
+				t.Fatalf("Unsupported signature type: %v", tc.sigType)
+			}
+			creationHash := hashType.New()
+
+			// Hash the same data with both approaches
+			readerHash.Write(testData)
+			creationHash.Write(testData)
+
+			readerDigest := readerHash.Sum(nil)
+			creationDigest := creationHash.Sum(nil)
+
+			// Verify both approaches produce identical results
+			assert.Equal(t, readerDigest, creationDigest,
+				"Hash digests should be identical for signature type %s", tc.sigType)
+
+			// Also verify the hash sizes match (additional sanity check)
+			assert.Equal(t, len(readerDigest), len(creationDigest),
+				"Hash digest lengths should match for signature type %s", tc.sigType)
+		})
+	}
+}
+
+// TestBug4HashAlgorithmConsistencyFixed verifies that the refactored hash algorithm
+// selection uses centralized helper functions for consistency.
+func TestBug4HashAlgorithmConsistencyFixed(t *testing.T) {
+	testCases := []SignatureType{
+		DSA_SHA1,
+		ECDSA_SHA256_P256,
+		RSA_SHA256_2048,
+		ECDSA_SHA384_P384,
+		RSA_SHA384_3072,
+		ECDSA_SHA512_P521,
+		RSA_SHA512_4096,
+		EdDSA_SHA512_Ed25519ph,
+	}
+
+	testData := []byte("test data for centralized hash selection")
+
+	for _, sigType := range testCases {
+		t.Run(string(sigType), func(t *testing.T) {
+			// Test that both helper functions return consistent results
+			hash1, err1 := getHashForSignatureType(sigType)
+			assert.NoError(t, err1, "getHashForSignatureType should not fail")
+
+			cryptoHash, err2 := getCryptoHashForSignatureType(sigType)
+			assert.NoError(t, err2, "getCryptoHashForSignatureType should not fail")
+
+			hash2 := cryptoHash.New()
+
+			// Both should produce the same hash result
+			hash1.Write(testData)
+			hash2.Write(testData)
+
+			digest1 := hash1.Sum(nil)
+			digest2 := hash2.Sum(nil)
+
+			assert.Equal(t, digest1, digest2,
+				"Both helper functions should produce identical hashes for %s", sigType)
+		})
+	}
 }

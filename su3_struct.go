@@ -2,7 +2,6 @@ package su3
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/binary"
@@ -178,20 +177,10 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 	su3.signature = make([]byte, keySize) // Temporary signature with correct length
 	su3.SignatureLength = uint16(keySize)
 
-	var hashType crypto.Hash
-	// Select appropriate hash algorithm based on signature type
-	switch su3.SignatureType {
-	case DSA_SHA1:
-		hashType = crypto.SHA1
-	case ECDSA_SHA256_P256, RSA_SHA256_2048:
-		hashType = crypto.SHA256
-	case ECDSA_SHA384_P384, RSA_SHA384_3072:
-		hashType = crypto.SHA384
-	case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
-		hashType = crypto.SHA512
-	default:
-		log.WithField("signature_type", su3.SignatureType).Error("Unknown signature type for SU3 signing")
-		return oops.Errorf("unknown signature type: %s", su3.SignatureType)
+	// Use centralized hash algorithm selection to ensure consistency
+	hashType, err := getCryptoHashForSignatureType(su3.SignatureType)
+	if err != nil {
+		return err
 	}
 
 	h := hashType.New()

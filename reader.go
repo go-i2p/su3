@@ -2,9 +2,6 @@ package su3
 
 import (
 	"bytes"
-	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/sha512"
 	"io"
 	"sync"
 
@@ -76,23 +73,14 @@ func initializeReaders(su3 *SU3, sigType SignatureType, buff *bytes.Buffer) erro
 	}
 	log.Debug("Content reader initialized")
 
-	switch sigType {
-	case DSA_SHA1:
-		su3.contentReader.hash = sha1.New()
-		log.Debug("Using SHA1 hash for content")
-	case ECDSA_SHA256_P256, RSA_SHA256_2048:
-		su3.contentReader.hash = sha256.New()
-		log.Debug("Using SHA256 hash for content")
-	case ECDSA_SHA384_P384, RSA_SHA384_3072:
-		su3.contentReader.hash = sha512.New384()
-		log.Debug("Using SHA384 hash for content")
-	case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
-		su3.contentReader.hash = sha512.New()
-		log.Debug("Using SHA512 hash for content")
-	default:
-		log.WithField("signature_type", sigType).Error("Unsupported signature type in hash initialization")
-		return ErrUnsupportedSignatureType
+	// Use centralized hash algorithm selection to ensure consistency
+	hash, err := getHashForSignatureType(sigType)
+	if err != nil {
+		return err
 	}
+	su3.contentReader.hash = hash
+
+	log.WithField("signature_type", sigType).Debug("Hash algorithm selected for content reader")
 
 	if su3.contentReader.hash != nil {
 		su3.contentReader.hash.Write(buff.Bytes())
