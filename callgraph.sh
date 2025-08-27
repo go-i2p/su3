@@ -1,7 +1,9 @@
 #! /usr/bin/env sh
 
 dirs=$(find . -type d)
-for dir in $dirs; do
+#for dir in $dirs; do
+dir="./"
+    echo "$dir" | grep -v "github.com/go-i2p/go-i2p" || break
     files=$(find "$dir" -maxdepth 2 -type f -name "*.go" -not -name "fuzz")
     #echo "Files in $dir: $files"
     file=$(echo $files | awk '{print $1}')
@@ -14,6 +16,8 @@ for dir in $dirs; do
     echo "Generating callgraph for $package"
     go-callvis -nostd -focus "$package" -group type -format svg -file $dir/$package "github.com/go-i2p/go-i2p/$dir"
     godocdown -template template.md -o "$dir/README.md" "./$dir"
+    echo godocdown -template template.md -o "$dir/README.md" "./$dir"
     git add -v "$dir/README.md"
     git add -v "$dir/$package.svg" "$dir/README.md"
-done
+#done
+echo done
