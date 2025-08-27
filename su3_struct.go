@@ -167,9 +167,9 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 	}
 	if expectedKeySize > 0 && keySize != expectedKeySize {
 		log.WithFields(logrus.Fields{
-			"signature_type":     su3.SignatureType,
-			"expected_key_size":  expectedKeySize,
-			"actual_key_size":    keySize,
+			"signature_type":    su3.SignatureType,
+			"expected_key_size": expectedKeySize,
+			"actual_key_size":   keySize,
 		}).Error("RSA key size does not match declared signature type")
 		return oops.Errorf("RSA key size %d bytes does not match signature type %s (expected %d bytes)", keySize, su3.SignatureType, expectedKeySize)
 	}

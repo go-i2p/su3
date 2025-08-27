@@ -68,7 +68,6 @@ func TestCompleteRoundTrip(t *testing.T) {
 
 	contentReader := parsedFile2.Content(cert.PublicKey)
 	actualContent, err := io.ReadAll(contentReader)
-
 	if err != nil {
 		t.Fatalf("Content reading with signature verification failed: %v", err)
 	}
