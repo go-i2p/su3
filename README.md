@@ -77,6 +77,49 @@ you can read Signature() directly without calling Content().
 
 For clarification on this behavior, see TestReadSignatureFirst.
 
+## Supported Signature Types
+
+The SU3 library supports multiple signature algorithms. When using the `Content(publicKey interface{})` method, ensure you provide the correct public key type for the signature algorithm used:
+
+### RSA Signatures
+- `RSA_SHA256_2048`: Requires `*rsa.PublicKey`
+- `RSA_SHA384_3072`: Requires `*rsa.PublicKey`  
+- `RSA_SHA512_4096`: Requires `*rsa.PublicKey`
+
+### ECDSA Signatures
+- `ECDSA_SHA256_P256`: Requires `*ecdsa.PublicKey`
+- `ECDSA_SHA384_P384`: Requires `*ecdsa.PublicKey`
+- `ECDSA_SHA512_P521`: Requires `*ecdsa.PublicKey`
+
+### DSA Signatures (Legacy)
+- `DSA_SHA1`: Requires `*dsa.PublicKey`
+
+### EdDSA Signatures
+- `EdDSA_SHA512_Ed25519ph`: Requires `ed25519.PublicKey` (note: not a pointer)
+
+Example usage with EdDSA:
+
+```go
+import "crypto/ed25519"
+
+// Assuming you have an Ed25519 public key
+var publicKey ed25519.PublicKey = /* your key here */
+
+su3File, err := su3.Read(body)
+if err != nil {
+    // Handle error
+}
+
+// For EdDSA, pass the public key directly (not a pointer)
+contentReader := su3File.Content(publicKey)
+content, err := ioutil.ReadAll(contentReader)
+if errors.Is(err, su3.ErrInvalidSignature) {
+    // Signature verification failed
+} else if err != nil {
+    // Handle other errors  
+}
+```
+
 ## Usage
 
 ```go
