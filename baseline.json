@@ -1,0 +1,2025 @@
+{
+  "metadata": {
+    "repository": "/home/idk/go/src/github.com/go-i2p/su3",
+    "generated_at": "2025-08-22T20:32:46.926124609-04:00",
+    "analysis_time": 6897071,
+    "files_processed": 9,
+    "tool_version": "1.0.0",
+    "go_version": ""
+  },
+  "overview": {
+    "total_lines_of_code": 0,
+    "total_functions": 10,
+    "total_methods": 20,
+    "total_structs": 6,
+    "total_interfaces": 0,
+    "total_packages": 1,
+    "total_files": 9
+  },
+  "functions": [
+    {
+      "name": "getBytes",
+      "package": "su3",
+      "file": "su3",
+      "line": 22,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*signatureReader",
+      "lines": {
+        "total": 19,
+        "code": 15,
+        "comments": 0,
+        "blank": 4
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 0,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 1,
+        "overall": 5.7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 153,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "consumeRemainingContent",
+      "package": "su3",
+      "file": "su3",
+      "line": 46,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*signatureReader",
+      "lines": {
+        "total": 33,
+        "code": 24,
+        "comments": 8,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 5,
+        "cognitive": 5,
+        "nesting_depth": 3,
+        "overall": 8
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 148,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "validateSignatureBounds",
+      "package": "su3",
+      "file": "su3",
+      "line": 84,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*signatureReader",
+      "lines": {
+        "total": 5,
+        "code": 5,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 148,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "readSignatureBytes",
+      "package": "su3",
+      "file": "su3",
+      "line": 95,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*signatureReader",
+      "lines": {
+        "total": 25,
+        "code": 20,
+        "comments": 1,
+        "blank": 4
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.6
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 3,
+        "overall": 6.7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 221,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "verifySignatureBytesRead",
+      "package": "su3",
+      "file": "su3",
+      "line": 124,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*signatureReader",
+      "lines": {
+        "total": 5,
+        "code": 5,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.6
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 80,
+        "has_example": false,
+        "quality_score": 0.32000000000000006
+      }
+    },
+    {
+      "name": "finalizeSignatureReader",
+      "package": "su3",
+      "file": "su3",
+      "line": 133,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*signatureReader",
+      "lines": {
+        "total": 3,
+        "code": 3,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 0,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.5
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 72,
+        "has_example": false,
+        "quality_score": 0.288
+      }
+    },
+    {
+      "name": "Read",
+      "package": "su3",
+      "file": "su3",
+      "line": 142,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*signatureReader",
+      "lines": {
+        "total": 14,
+        "code": 13,
+        "comments": 1,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 124,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "Read",
+      "package": "su3",
+      "file": "su3",
+      "line": 18,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*fixedLengthReader",
+      "lines": {
+        "total": 14,
+        "code": 14,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 150,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "Read",
+      "package": "su3",
+      "file": "su3",
+      "line": 40,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 26,
+        "code": 20,
+        "comments": 0,
+        "blank": 6
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 6,
+        "cognitive": 6,
+        "nesting_depth": 2,
+        "overall": 8.8
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 155,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "ensureReaderInitialized",
+      "package": "su3",
+      "file": "su3",
+      "line": 70,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 9,
+        "code": 9,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 81,
+        "has_example": false,
+        "quality_score": 0.32400000000000007
+      }
+    },
+    {
+      "name": "readContentBytes",
+      "package": "su3",
+      "file": "su3",
+      "line": 83,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 14,
+        "code": 12,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 3,
+        "overall": 6.7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 92,
+        "has_example": false,
+        "quality_score": 0.36800000000000005
+      }
+    },
+    {
+      "name": "updateHashWithBytes",
+      "package": "su3",
+      "file": "su3",
+      "line": 101,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 3,
+        "code": 3,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 0,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.5
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 73,
+        "has_example": false,
+        "quality_score": 0.292
+      }
+    },
+    {
+      "name": "performSignatureVerification",
+      "package": "su3",
+      "file": "su3",
+      "line": 108,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 13,
+        "code": 11,
+        "comments": 0,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 87,
+        "has_example": false,
+        "quality_score": 0.34800000000000003
+      }
+    },
+    {
+      "name": "verifySignatureByType",
+      "package": "su3",
+      "file": "su3",
+      "line": 125,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 21,
+        "code": 21,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 2,
+        "cognitive": 2,
+        "nesting_depth": 1,
+        "overall": 3.1
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 83,
+        "has_example": false,
+        "quality_score": 0.332
+      }
+    },
+    {
+      "name": "verifyRSASignature",
+      "package": "su3",
+      "file": "su3",
+      "line": 150,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 13,
+        "code": 12,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 78,
+        "has_example": false,
+        "quality_score": 0.31200000000000006
+      }
+    },
+    {
+      "name": "verifyDSASignature",
+      "package": "su3",
+      "file": "su3",
+      "line": 167,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 26,
+        "code": 23,
+        "comments": 0,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 5,
+        "cognitive": 5,
+        "nesting_depth": 1,
+        "overall": 7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 49,
+        "has_example": false,
+        "quality_score": 0.196
+      }
+    },
+    {
+      "name": "verifyECDSASignature",
+      "package": "su3",
+      "file": "su3",
+      "line": 197,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 26,
+        "code": 23,
+        "comments": 0,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.8
+      },
+      "complexity": {
+        "cyclomatic": 5,
+        "cognitive": 5,
+        "nesting_depth": 1,
+        "overall": 7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 78,
+        "has_example": false,
+        "quality_score": 0.31200000000000006
+      }
+    },
+    {
+      "name": "verifyEdDSASignature",
+      "package": "su3",
+      "file": "su3",
+      "line": 227,
+      "is_exported": false,
+      "is_method": true,
+      "receiver_type": "*contentReader",
+      "lines": {
+        "total": 13,
+        "code": 12,
+        "comments": 0,
+        "blank": 1
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 65,
+        "has_example": false,
+        "quality_score": 0.26
+      }
+    },
+    {
+      "name": "Content",
+      "package": "su3",
+      "file": "su3",
+      "line": 41,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*SU3",
+      "lines": {
+        "total": 3,
+        "code": 3,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 1,
+        "generic_parameters": null,
+        "signature_complexity": 1.6
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 828,
+        "has_example": false,
+        "quality_score": 0.7000000000000001
+      }
+    },
+    {
+      "name": "Signature",
+      "package": "su3",
+      "file": "su3",
+      "line": 49,
+      "is_exported": true,
+      "is_method": true,
+      "receiver_type": "*SU3",
+      "lines": {
+        "total": 2,
+        "code": 2,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 0,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": false,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 0.3
+      },
+      "complexity": {
+        "cyclomatic": 1,
+        "cognitive": 1,
+        "nesting_depth": 0,
+        "overall": 1.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 88,
+        "has_example": false,
+        "quality_score": 0.45200000000000007
+      }
+    },
+    {
+      "name": "Read",
+      "package": "su3",
+      "file": "su3",
+      "line": 17,
+      "is_exported": true,
+      "is_method": false,
+      "lines": {
+        "total": 52,
+        "code": 41,
+        "comments": 0,
+        "blank": 11
+      },
+      "signature": {
+        "parameter_count": 1,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.1
+      },
+      "complexity": {
+        "cyclomatic": 9,
+        "cognitive": 9,
+        "nesting_depth": 1,
+        "overall": 12.2
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 196,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "initializeReaders",
+      "package": "su3",
+      "file": "su3",
+      "line": 74,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 34,
+        "code": 30,
+        "comments": 0,
+        "blank": 4
+      },
+      "signature": {
+        "parameter_count": 3,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.8
+      },
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 3,
+        "nesting_depth": 1,
+        "overall": 4.4
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 95,
+        "has_example": false,
+        "quality_score": 0.38
+      }
+    },
+    {
+      "name": "readAndValidateMagicBytes",
+      "package": "su3",
+      "file": "su3",
+      "line": 15,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 18,
+        "code": 18,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 1,
+        "overall": 5.7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 91,
+        "has_example": false,
+        "quality_score": 0.36400000000000005
+      }
+    },
+    {
+      "name": "readFileFormatHeader",
+      "package": "su3",
+      "file": "su3",
+      "line": 38,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 34,
+        "code": 29,
+        "comments": 2,
+        "blank": 3
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 6,
+        "cognitive": 6,
+        "nesting_depth": 1,
+        "overall": 8.3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 89,
+        "has_example": false,
+        "quality_score": 0.35600000000000004
+      }
+    },
+    {
+      "name": "readSignatureInfo",
+      "package": "su3",
+      "file": "su3",
+      "line": 77,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 48,
+        "code": 41,
+        "comments": 3,
+        "blank": 4
+      },
+      "signature": {
+        "parameter_count": 3,
+        "return_count": 2,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 2.1
+      },
+      "complexity": {
+        "cyclomatic": 7,
+        "cognitive": 7,
+        "nesting_depth": 1,
+        "overall": 9.6
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 100,
+        "has_example": false,
+        "quality_score": 0.5
+      }
+    },
+    {
+      "name": "readLengthFields",
+      "package": "su3",
+      "file": "su3",
+      "line": 130,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 64,
+        "code": 55,
+        "comments": 4,
+        "blank": 5
+      },
+      "signature": {
+        "parameter_count": 3,
+        "return_count": 3,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 2.4
+      },
+      "complexity": {
+        "cyclomatic": 10,
+        "cognitive": 10,
+        "nesting_depth": 1,
+        "overall": 13.5
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 105,
+        "has_example": false,
+        "quality_score": 0.4
+      }
+    },
+    {
+      "name": "readFileMetadata",
+      "package": "su3",
+      "file": "su3",
+      "line": 199,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 90,
+        "code": 79,
+        "comments": 5,
+        "blank": 6
+      },
+      "signature": {
+        "parameter_count": 3,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.8
+      },
+      "complexity": {
+        "cyclomatic": 14,
+        "cognitive": 14,
+        "nesting_depth": 1,
+        "overall": 18.7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 87,
+        "has_example": false,
+        "quality_score": 0.34800000000000003
+      }
+    },
+    {
+      "name": "readUnusedBytes28To39",
+      "package": "su3",
+      "file": "su3",
+      "line": 294,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 16,
+        "code": 16,
+        "comments": 0,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 4,
+        "cognitive": 4,
+        "nesting_depth": 2,
+        "overall": 6.2
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 87,
+        "has_example": false,
+        "quality_score": 0.34800000000000003
+      }
+    },
+    {
+      "name": "readVersionAndSignerID",
+      "package": "su3",
+      "file": "su3",
+      "line": 315,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 34,
+        "code": 30,
+        "comments": 2,
+        "blank": 2
+      },
+      "signature": {
+        "parameter_count": 4,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 2.3
+      },
+      "complexity": {
+        "cyclomatic": 5,
+        "cognitive": 5,
+        "nesting_depth": 1,
+        "overall": 7
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 83,
+        "has_example": false,
+        "quality_score": 0.332
+      }
+    },
+    {
+      "name": "validateSignatureLength",
+      "package": "su3",
+      "file": "su3",
+      "line": 353,
+      "is_exported": false,
+      "is_method": false,
+      "lines": {
+        "total": 42,
+        "code": 37,
+        "comments": 5,
+        "blank": 0
+      },
+      "signature": {
+        "parameter_count": 2,
+        "return_count": 1,
+        "has_variadic": false,
+        "returns_error": true,
+        "interface_parameters": 0,
+        "generic_parameters": null,
+        "signature_complexity": 1.3
+      },
+      "complexity": {
+        "cyclomatic": 10,
+        "cognitive": 10,
+        "nesting_depth": 2,
+        "overall": 14
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 93,
+        "has_example": false,
+        "quality_score": 0.37200000000000005
+      }
+    }
+  ],
+  "structs": [
+    {
+      "name": "signatureReader",
+      "package": "su3",
+      "file": "su3",
+      "line": 12,
+      "is_exported": false,
+      "total_fields": 4,
+      "fields_by_type": {
+        "pointer": 1,
+        "slice": 1,
+        "struct": 2
+      },
+      "embedded_types": null,
+      "methods": [
+        {
+          "name": "getBytes",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 0,
+            "has_variadic": false,
+            "returns_error": false,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0
+          },
+          "lines": {
+            "total": 19,
+            "code": 13,
+            "comments": 3,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 4,
+            "cognitive": 0,
+            "nesting_depth": 3,
+            "overall": 5.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 162,
+            "has_example": true,
+            "quality_score": 0.7
+          }
+        },
+        {
+          "name": "consumeRemainingContent",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.3
+          },
+          "lines": {
+            "total": 33,
+            "code": 23,
+            "comments": 6,
+            "blank": 4
+          },
+          "complexity": {
+            "cyclomatic": 5,
+            "cognitive": 0,
+            "nesting_depth": 4,
+            "overall": 7
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 154,
+            "has_example": true,
+            "quality_score": 0.7
+          }
+        },
+        {
+          "name": "validateSignatureBounds",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.3
+          },
+          "lines": {
+            "total": 5,
+            "code": 3,
+            "comments": 1,
+            "blank": 1
+          },
+          "complexity": {
+            "cyclomatic": 2,
+            "cognitive": 0,
+            "nesting_depth": 1,
+            "overall": 2.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 154,
+            "has_example": true,
+            "quality_score": 0.7
+          }
+        },
+        {
+          "name": "readSignatureBytes",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 2,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.6
+          },
+          "lines": {
+            "total": 25,
+            "code": 17,
+            "comments": 5,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 4,
+            "cognitive": 0,
+            "nesting_depth": 3,
+            "overall": 5.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 230,
+            "has_example": true,
+            "quality_score": 0.7
+          }
+        },
+        {
+          "name": "verifySignatureBytesRead",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 2,
+            "return_count": 2,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 1.6
+          },
+          "lines": {
+            "total": 5,
+            "code": 3,
+            "comments": 1,
+            "blank": 1
+          },
+          "complexity": {
+            "cyclomatic": 2,
+            "cognitive": 0,
+            "nesting_depth": 1,
+            "overall": 2.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 83,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "finalizeSignatureReader",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 0,
+            "has_variadic": false,
+            "returns_error": false,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.5
+          },
+          "lines": {
+            "total": 3,
+            "code": 2,
+            "comments": 0,
+            "blank": 1
+          },
+          "complexity": {
+            "cyclomatic": 1,
+            "cognitive": 0,
+            "nesting_depth": 0,
+            "overall": 1
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 75,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "Read",
+          "is_exported": true,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 2,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 1.1
+          },
+          "lines": {
+            "total": 14,
+            "code": 9,
+            "comments": 2,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 3,
+            "cognitive": 0,
+            "nesting_depth": 2,
+            "overall": 4
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 133,
+            "has_example": true,
+            "quality_score": 0.7
+          }
+        }
+      ],
+      "tag_usage": {},
+      "complexity": {
+        "cyclomatic": 8,
+        "cognitive": 0,
+        "nesting_depth": 0,
+        "overall": 8
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 96,
+        "has_example": true,
+        "quality_score": 0.7
+      }
+    },
+    {
+      "name": "fixedLengthReader",
+      "package": "su3",
+      "file": "su3",
+      "line": 9,
+      "is_exported": false,
+      "total_fields": 3,
+      "fields_by_type": {
+        "primitive": 2,
+        "struct": 1
+      },
+      "embedded_types": null,
+      "methods": [
+        {
+          "name": "Read",
+          "is_exported": true,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 2,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 1.1
+          },
+          "lines": {
+            "total": 14,
+            "code": 9,
+            "comments": 2,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 3,
+            "cognitive": 0,
+            "nesting_depth": 2,
+            "overall": 4
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 159,
+            "has_example": true,
+            "quality_score": 0.7
+          }
+        }
+      ],
+      "tag_usage": {},
+      "complexity": {
+        "cyclomatic": 6,
+        "cognitive": 0,
+        "nesting_depth": 0,
+        "overall": 6
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 121,
+        "has_example": true,
+        "quality_score": 0.7
+      }
+    },
+    {
+      "name": "dsaSignature",
+      "package": "su3",
+      "file": "su3",
+      "line": 19,
+      "is_exported": false,
+      "total_fields": 1,
+      "fields_by_type": {
+        "pointer": 2
+      },
+      "embedded_types": null,
+      "methods": null,
+      "tag_usage": {},
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 0,
+        "nesting_depth": 0,
+        "overall": 3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 70,
+        "has_example": true,
+        "quality_score": 0.7
+      }
+    },
+    {
+      "name": "ecdsaSignature",
+      "package": "su3",
+      "file": "su3",
+      "line": 24,
+      "is_exported": false,
+      "total_fields": 1,
+      "fields_by_type": {
+        "pointer": 2
+      },
+      "embedded_types": null,
+      "methods": null,
+      "tag_usage": {},
+      "complexity": {
+        "cyclomatic": 3,
+        "cognitive": 0,
+        "nesting_depth": 0,
+        "overall": 3
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 75,
+        "has_example": true,
+        "quality_score": 0.7
+      }
+    },
+    {
+      "name": "contentReader",
+      "package": "su3",
+      "file": "su3",
+      "line": 30,
+      "is_exported": false,
+      "total_fields": 4,
+      "fields_by_type": {
+        "pointer": 2,
+        "primitive": 1,
+        "struct": 1
+      },
+      "embedded_types": null,
+      "methods": [
+        {
+          "name": "Read",
+          "is_exported": true,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 2,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 1.1
+          },
+          "lines": {
+            "total": 26,
+            "code": 18,
+            "comments": 5,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 6,
+            "cognitive": 0,
+            "nesting_depth": 5,
+            "overall": 8.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 164,
+            "has_example": true,
+            "quality_score": 0.7
+          }
+        },
+        {
+          "name": "ensureReaderInitialized",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.3
+          },
+          "lines": {
+            "total": 9,
+            "code": 6,
+            "comments": 1,
+            "blank": 2
+          },
+          "complexity": {
+            "cyclomatic": 2,
+            "cognitive": 0,
+            "nesting_depth": 1,
+            "overall": 2.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 84,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "readContentBytes",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 2,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 1.1
+          },
+          "lines": {
+            "total": 14,
+            "code": 9,
+            "comments": 2,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 4,
+            "cognitive": 0,
+            "nesting_depth": 3,
+            "overall": 5.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 95,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "updateHashWithBytes",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 0,
+            "has_variadic": false,
+            "returns_error": false,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.5
+          },
+          "lines": {
+            "total": 3,
+            "code": 2,
+            "comments": 0,
+            "blank": 1
+          },
+          "complexity": {
+            "cyclomatic": 2,
+            "cognitive": 0,
+            "nesting_depth": 1,
+            "overall": 2.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 76,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "performSignatureVerification",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.3
+          },
+          "lines": {
+            "total": 13,
+            "code": 9,
+            "comments": 2,
+            "blank": 2
+          },
+          "complexity": {
+            "cyclomatic": 3,
+            "cognitive": 0,
+            "nesting_depth": 2,
+            "overall": 4
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 90,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "verifySignatureByType",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.3
+          },
+          "lines": {
+            "total": 21,
+            "code": 14,
+            "comments": 4,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 11,
+            "cognitive": 0,
+            "nesting_depth": 1,
+            "overall": 11.5
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 86,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "verifyRSASignature",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.8
+          },
+          "lines": {
+            "total": 13,
+            "code": 9,
+            "comments": 2,
+            "blank": 2
+          },
+          "complexity": {
+            "cyclomatic": 3,
+            "cognitive": 0,
+            "nesting_depth": 2,
+            "overall": 4
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 81,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "verifyDSASignature",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.3
+          },
+          "lines": {
+            "total": 26,
+            "code": 18,
+            "comments": 5,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 5,
+            "cognitive": 0,
+            "nesting_depth": 4,
+            "overall": 7
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 52,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "verifyECDSASignature",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.8
+          },
+          "lines": {
+            "total": 26,
+            "code": 18,
+            "comments": 5,
+            "blank": 3
+          },
+          "complexity": {
+            "cyclomatic": 5,
+            "cognitive": 0,
+            "nesting_depth": 4,
+            "overall": 7
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 81,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        },
+        {
+          "name": "verifyEdDSASignature",
+          "is_exported": false,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": true,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.3
+          },
+          "lines": {
+            "total": 13,
+            "code": 9,
+            "comments": 2,
+            "blank": 2
+          },
+          "complexity": {
+            "cyclomatic": 3,
+            "cognitive": 0,
+            "nesting_depth": 2,
+            "overall": 4
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 68,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        }
+      ],
+      "tag_usage": {},
+      "complexity": {
+        "cyclomatic": 8,
+        "cognitive": 0,
+        "nesting_depth": 0,
+        "overall": 8
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 114,
+        "has_example": true,
+        "quality_score": 0.8999999999999999
+      }
+    },
+    {
+      "name": "SU3",
+      "package": "su3",
+      "file": "su3",
+      "line": 10,
+      "is_exported": true,
+      "total_fields": 12,
+      "fields_by_type": {
+        "interface": 1,
+        "pointer": 2,
+        "primitive": 4,
+        "struct": 5
+      },
+      "embedded_types": null,
+      "methods": [
+        {
+          "name": "Content",
+          "is_exported": true,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 1,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": false,
+            "interface_parameters": 1,
+            "generic_parameters": null,
+            "signature_complexity": 1.3
+          },
+          "lines": {
+            "total": 3,
+            "code": 2,
+            "comments": 0,
+            "blank": 1
+          },
+          "complexity": {
+            "cyclomatic": 1,
+            "cognitive": 0,
+            "nesting_depth": 0,
+            "overall": 1
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 842,
+            "has_example": true,
+            "quality_score": 0.7
+          }
+        },
+        {
+          "name": "Signature",
+          "is_exported": true,
+          "is_pointer_receiver": true,
+          "signature": {
+            "parameter_count": 0,
+            "return_count": 1,
+            "has_variadic": false,
+            "returns_error": false,
+            "interface_parameters": 0,
+            "generic_parameters": null,
+            "signature_complexity": 0.3
+          },
+          "lines": {
+            "total": 2,
+            "code": 1,
+            "comments": 0,
+            "blank": 1
+          },
+          "complexity": {
+            "cyclomatic": 1,
+            "cognitive": 0,
+            "nesting_depth": 0,
+            "overall": 1
+          },
+          "documentation": {
+            "has_comment": true,
+            "comment_length": 94,
+            "has_example": true,
+            "quality_score": 0.5
+          }
+        }
+      ],
+      "tag_usage": {},
+      "complexity": {
+        "cyclomatic": 25,
+        "cognitive": 0,
+        "nesting_depth": 0,
+        "overall": 25
+      },
+      "documentation": {
+        "has_comment": true,
+        "comment_length": 97,
+        "has_example": true,
+        "quality_score": 0.7
+      }
+    }
+  ],
+  "interfaces": null,
+  "packages": [
+    {
+      "name": "su3",
+      "path": "su3",
+      "files": [
+        "/home/idk/go/src/github.com/go-i2p/su3/constants.go",
+        "/home/idk/go/src/github.com/go-i2p/su3/signature_reader.go",
+        "/home/idk/go/src/github.com/go-i2p/su3/fixed_length_reader.go",
+        "/home/idk/go/src/github.com/go-i2p/su3/content_reader.go",
+        "/home/idk/go/src/github.com/go-i2p/su3/su3_struct.go",
+        "/home/idk/go/src/github.com/go-i2p/su3/reader.go",
+        "/home/idk/go/src/github.com/go-i2p/su3/types.go",
+        "/home/idk/go/src/github.com/go-i2p/su3/su3.go",
+        "/home/idk/go/src/github.com/go-i2p/su3/parsing_utils.go"
+      ],
+      "lines": {
+        "total": 1120,
+        "code": 1120,
+        "comments": 0,
+        "blank": 0
+      },
+      "functions": 30,
+      "structs": 9,
+      "interfaces": 0,
+      "dependencies": [
+        "github.com/samber/oops",
+        "github.com/sirupsen/logrus",
+        "github.com/go-i2p/logger"
+      ],
+      "dependents": null,
+      "cohesion_score": 0.8666666666666666,
+      "coupling_score": 1.5,
+      "documentation": {
+        "has_comment": false,
+        "comment_length": 0,
+        "has_example": false,
+        "quality_score": 0
+      }
+    }
+  ],
+  "patterns": {
+    "design_patterns": {
+      "singleton": null,
+      "factory": null,
+      "builder": null,
+      "observer": null,
+      "strategy": null
+    },
+    "concurrency_patterns": {
+      "worker_pools": [],
+      "pipelines": [],
+      "fan_out": [],
+      "fan_in": [],
+      "semaphores": [],
+      "goroutines": {
+        "total_count": 0,
+        "anonymous_count": 0,
+        "named_count": 0,
+        "potential_leaks": [],
+        "instances": []
+      },
+      "channels": {
+        "total_count": 0,
+        "buffered_count": 0,
+        "unbuffered_count": 0,
+        "directional_count": 0,
+        "instances": []
+      },
+      "sync_primitives": {
+        "mutexes": [],
+        "rw_mutexes": [],
+        "wait_groups": [],
+        "once": [],
+        "cond": [],
+        "atomic": []
+      }
+    },
+    "anti_patterns": {
+      "god_objects": null,
+      "long_methods": null,
+      "deep_nesting": null,
+      "magic_numbers": null
+    }
+  },
+  "complexity": {
+    "average_function_complexity": 0,
+    "average_struct_complexity": 0,
+    "highest_complexity": null,
+    "complexity_distribution": null
+  },
+  "documentation": {
+    "coverage": {
+      "packages": 0,
+      "functions": 0,
+      "types": 0,
+      "methods": 0,
+      "overall": 0
+    },
+    "quality": {
+      "average_length": 0,
+      "code_examples": 0,
+      "inline_comments": 0,
+      "block_comments": 0,
+      "quality_score": 0
+    },
+    "todo_comments": null,
+    "fixme_comments": null,
+    "hack_comments": null
+  },
+  "generics": {
+    "type_parameters": {
+      "count": 0,
+      "constraints": null,
+      "complexity": null
+    },
+    "instantiations": {
+      "functions": null,
+      "types": null,
+      "methods": null
+    },
+    "constraint_usage": null,
+    "complexity_score": 0
+  }
+}

@@ -15,7 +15,6 @@ import (
 // The returned SU3 contains metadata about the file and provides access to content and signature.
 // Moved from: su3.go
 func Read(reader io.Reader) (su3 *SU3, err error) {
-	log := log
 	log.Debug("Starting to read SU3 file")
 	var buff bytes.Buffer
 
@@ -72,7 +71,6 @@ func Read(reader io.Reader) (su3 *SU3, err error) {
 // initializeReaders creates and configures the content and signature readers.
 // Moved from: su3.go
 func initializeReaders(su3 *SU3, sigType SignatureType, buff *bytes.Buffer) error {
-	log := log
 	su3.contentReader = &contentReader{
 		su3: su3,
 	}

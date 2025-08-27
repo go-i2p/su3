@@ -13,7 +13,6 @@ import (
 // readAndValidateMagicBytes reads and validates the SU3 file magic bytes.
 // Moved from: su3.go
 func readAndValidateMagicBytes(reader io.Reader, buff *bytes.Buffer) error {
-	log := log
 	mbytes := make([]byte, len(magicBytes))
 	l, err := reader.Read(mbytes)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -36,7 +35,6 @@ func readAndValidateMagicBytes(reader io.Reader, buff *bytes.Buffer) error {
 // readFileFormatHeader reads the unused byte 6 and file format version.
 // Moved from: su3.go
 func readFileFormatHeader(reader io.Reader, buff *bytes.Buffer) error {
-	log := log
 	unused := [1]byte{}
 
 	// Unused byte 6.
@@ -75,7 +73,6 @@ func readFileFormatHeader(reader io.Reader, buff *bytes.Buffer) error {
 // readSignatureInfo reads signature type and length, returning the signature type.
 // Moved from: su3.go
 func readSignatureInfo(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (SignatureType, error) {
-	log := log
 	// Signature type.
 	sigTypeBytes := [2]byte{}
 	l, err := reader.Read(sigTypeBytes[:])
@@ -128,7 +125,6 @@ func readSignatureInfo(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (Signatur
 // readLengthFields reads various length fields including version and signer ID lengths.
 // Moved from: su3.go
 func readLengthFields(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (uint16, uint16, error) {
-	log := log
 	unused := [1]byte{}
 
 	// Unused byte 12.
@@ -197,7 +193,6 @@ func readLengthFields(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (uint16, u
 // readFileMetadata reads content length, file type, and content type.
 // Moved from: su3.go
 func readFileMetadata(reader io.Reader, su3 *SU3, buff *bytes.Buffer) error {
-	log := log
 	unused := [1]byte{}
 
 	// Content length.
@@ -292,7 +287,6 @@ func readFileMetadata(reader io.Reader, su3 *SU3, buff *bytes.Buffer) error {
 // readUnusedBytes28To39 reads the 12 unused bytes in the range 28-39.
 // Moved from: su3.go
 func readUnusedBytes28To39(reader io.Reader, buff *bytes.Buffer) error {
-	log := log
 	unused := [1]byte{}
 	for i := 0; i < 12; i++ {
 		l, err := reader.Read(unused[:])
@@ -313,7 +307,6 @@ func readUnusedBytes28To39(reader io.Reader, buff *bytes.Buffer) error {
 // readVersionAndSignerID reads the version and signer ID strings.
 // Moved from: su3.go
 func readVersionAndSignerID(reader io.Reader, su3 *SU3, buff *bytes.Buffer, verLen, signIDLen uint16) error {
-	log := log
 	// Version.
 	versionBytes := make([]byte, verLen)
 	l, err := reader.Read(versionBytes[:])
