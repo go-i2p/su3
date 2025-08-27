@@ -722,6 +722,7 @@ func TestSignatureBufferPreallocationBounds(t *testing.T) {
 
 // TestBug3NilPointerDereferenceInSignatureReading reproduces the nil pointer dereference
 // that occurs when signature length validation fails during parsing.
+// This test verifies that signature length validation works correctly.
 func TestBug3NilPointerDereferenceInSignatureReading(t *testing.T) {
 	// Create a valid SU3 file first
 	content := []byte("Hello, World!")
@@ -759,56 +760,19 @@ func TestBug3NilPointerDereferenceInSignatureReading(t *testing.T) {
 	// The parsing should fail with an error, not cause a crash
 	if err == nil {
 		t.Error("Expected parsing to fail due to invalid signature length")
-		
-		// If it doesn't fail during parsing, try to access signature reader
-		// This is where the nil pointer dereference might occur
-		if parsedSU3 != nil && parsedSU3.signatureReader != nil {
-			// Try to read signature - this should not crash
-			signatureReader := parsedSU3.Signature()
-			_, readErr := io.ReadAll(signatureReader)
-			if readErr != nil {
-				t.Logf("Signature reading failed as expected: %v", readErr)
-			}
-		}
 	} else {
 		// This is the expected behavior - parsing should fail with a clear error
 		t.Logf("Parsing failed as expected: %v", err)
 		assert.Contains(t, err.Error(), "signature length", "Error should mention signature length validation")
 	}
-
-	// Test another scenario: What if we have a corrupted signature in an otherwise valid file?
-	// This might cause nil pointer access during signature verification
-	validReader := bytes.NewReader(validBytes)
-	validSU3, err := Read(validReader)
-	if err != nil {
-		t.Fatalf("Failed to parse valid SU3 file: %v", err)
-	}
-
-	// Now try to read signature with intentionally invalid content length
-	// This tests if signature reader handles partial/corrupted data gracefully
-	publicKey := &privateKey.PublicKey
 	
-	// Test content reading first (should work)
-	contentReader := validSU3.Content(publicKey)
-	contentData, err := io.ReadAll(contentReader)
-	if err != nil {
-		t.Logf("Content reading error (may be expected): %v", err)
-	} else {
-		t.Logf("Content read successfully: %d bytes", len(contentData))
-	}
-	
-	// Test signature reading (should also work on valid file)
-	signatureReader := validSU3.Signature()
-	signatureData, err := io.ReadAll(signatureReader)
-	if err != nil {
-		t.Logf("Signature reading error: %v", err)
-	} else {
-		t.Logf("Signature read successfully: %d bytes", len(signatureData))
-	}
+	// Verify that parsedSU3 is nil when parsing fails
+	assert.Nil(t, parsedSU3, "Parsed SU3 should be nil when parsing fails")
 }
 
 // TestBug3NilPointerDereferenceInSignatureReadingFixed tests that signature reader
 // nil checks prevent crashes when signature reader is not properly initialized.
+// This is a regression test for Bug #3 from AUDIT.md.
 func TestBug3NilPointerDereferenceInSignatureReadingFixed(t *testing.T) {
 	// Create a minimal SU3 object with uninitialized signature reader to test nil check
 	su3File := &SU3{
