@@ -333,8 +333,8 @@ func TestSU3SetterMethods(t *testing.T) {
 
 // TestSU3CompatibilityWithReseedTools tests compatibility with the reseed-tools format
 func TestSU3CompatibilityWithReseedTools(t *testing.T) {
-	// Generate test RSA key
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	// Generate test RSA key - Use 4096-bit key to match RSA_SHA512_4096 signature type
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	assert.NoError(t, err)
 
 	// Create SU3 file similar to how reseed-tools would create it
@@ -362,4 +362,77 @@ func TestSU3CompatibilityWithReseedTools(t *testing.T) {
 	assert.Equal(t, ZIP, parsedFile.FileType)
 	assert.Equal(t, RSA_SHA512_4096, parsedFile.SignatureType)
 	assert.Equal(t, "reseed@example.com", parsedFile.SignerID)
+}
+
+// TestBug1SignatureTypeValidationBypass reproduces the critical bug where
+// RSA keys of any size can be used with any RSA signature type declaration,
+// bypassing signature length validation.
+func TestBug1SignatureTypeValidationBypass(t *testing.T) {
+	// Test case 1: Use 2048-bit key with RSA_SHA512_4096 (should now fail correctly)
+	su3File := New()
+	su3File.SetSignatureType(RSA_SHA512_4096) // Declare 4096-bit signature type
+	su3File.SetContent([]byte("test content"))
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048) // Generate 2048-bit key
+	if err != nil {
+		t.Fatalf("Failed to generate RSA key: %v", err)
+	}
+
+	err = su3File.Sign(key) // This should now fail correctly
+	if err == nil {
+		t.Errorf("Expected Sign to fail with key size mismatch, but it succeeded")
+	}
+
+	// Test case 2: Use 4096-bit key with RSA_SHA256_2048 (should now fail correctly)
+	su3File2 := New()
+	su3File2.SetSignatureType(RSA_SHA256_2048) // Declare 2048-bit signature type
+	su3File2.SetContent([]byte("test content"))
+
+	key2, err := rsa.GenerateKey(rand.Reader, 4096) // Generate 4096-bit key
+	if err != nil {
+		t.Fatalf("Failed to generate RSA key: %v", err)
+	}
+
+	err = su3File2.Sign(key2) // This should now fail correctly
+	if err == nil {
+		t.Errorf("Expected Sign to fail with key size mismatch, but it succeeded")
+	}
+
+	// Test case 3: Use 2048-bit key with RSA_SHA256_2048 (should succeed)
+	su3File3 := New()
+	su3File3.SetSignatureType(RSA_SHA256_2048) // Declare 2048-bit signature type
+	su3File3.SetContent([]byte("test content"))
+
+	key3, err := rsa.GenerateKey(rand.Reader, 2048) // Generate matching 2048-bit key
+	if err != nil {
+		t.Fatalf("Failed to generate RSA key: %v", err)
+	}
+
+	err = su3File3.Sign(key3) // This should succeed
+	if err != nil {
+		t.Errorf("Expected Sign to succeed with matching key size, but got error: %v", err)
+	}
+
+	if su3File3.SignatureLength != 256 {
+		t.Errorf("Expected signature length 256 bytes, got %d", su3File3.SignatureLength)
+	}
+
+	// Test case 4: Use 4096-bit key with RSA_SHA512_4096 (should succeed)
+	su3File4 := New()
+	su3File4.SetSignatureType(RSA_SHA512_4096) // Declare 4096-bit signature type
+	su3File4.SetContent([]byte("test content"))
+
+	key4, err := rsa.GenerateKey(rand.Reader, 4096) // Generate matching 4096-bit key
+	if err != nil {
+		t.Fatalf("Failed to generate RSA key: %v", err)
+	}
+
+	err = su3File4.Sign(key4) // This should succeed
+	if err != nil {
+		t.Errorf("Expected Sign to succeed with matching key size, but got error: %v", err)
+	}
+
+	if su3File4.SignatureLength != 512 {
+		t.Errorf("Expected signature length 512 bytes, got %d", su3File4.SignatureLength)
+	}
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/samber/oops"
+	"github.com/sirupsen/logrus"
 )
 
 // SU3 represents a parsed SU3 file with its metadata and content readers.
@@ -128,6 +129,23 @@ func (su3 *SU3) SetSignatureType(signatureType SignatureType) {
 	log.WithField("signature_type", signatureType).Debug("Signature type set for SU3 file")
 }
 
+// getExpectedRSAKeySize returns the expected RSA key size in bytes for a given signature type.
+// Returns 0 for non-RSA signature types, and an error for invalid signature types.
+func getExpectedRSAKeySize(signatureType SignatureType) (int, error) {
+	switch signatureType {
+	case RSA_SHA256_2048:
+		return 256, nil // 2048 bits = 256 bytes
+	case RSA_SHA384_3072:
+		return 384, nil // 3072 bits = 384 bytes
+	case RSA_SHA512_4096:
+		return 512, nil // 4096 bits = 512 bytes
+	case DSA_SHA1, ECDSA_SHA256_P256, ECDSA_SHA384_P384, ECDSA_SHA512_P521, EdDSA_SHA512_Ed25519ph:
+		return 0, nil // Non-RSA signature types don't have fixed key size requirements
+	default:
+		return 0, oops.Errorf("unknown signature type: %s", signatureType)
+	}
+}
+
 // Sign cryptographically signs the SU3 file using the provided RSA private key.
 // The signature covers the file header and content but not the signature itself.
 // The signature length is automatically determined by the RSA key size.
@@ -141,8 +159,22 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 		return oops.Errorf("private key cannot be nil")
 	}
 
+	// Validate RSA key size matches declared signature type
+	keySize := privateKey.Size() // Returns key size in bytes
+	expectedKeySize, err := getExpectedRSAKeySize(su3.SignatureType)
+	if err != nil {
+		return err
+	}
+	if expectedKeySize > 0 && keySize != expectedKeySize {
+		log.WithFields(logrus.Fields{
+			"signature_type":     su3.SignatureType,
+			"expected_key_size":  expectedKeySize,
+			"actual_key_size":    keySize,
+		}).Error("RSA key size does not match declared signature type")
+		return oops.Errorf("RSA key size %d bytes does not match signature type %s (expected %d bytes)", keySize, su3.SignatureType, expectedKeySize)
+	}
+
 	// Pre-calculate signature length to ensure header consistency
-	keySize := privateKey.Size()          // Returns key size in bytes
 	su3.signature = make([]byte, keySize) // Temporary signature with correct length
 	su3.SignatureLength = uint16(keySize)
 
