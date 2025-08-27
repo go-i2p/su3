@@ -13,7 +13,7 @@
         <a href="index.html">go-i2p/su3</a>
       </h2>
       <div class="repo-meta">
-        📝 7 commits
+        📝 31 commits
          • 📜 MIT License
       </div>
     </div>
@@ -21,6 +21,11 @@
     <ul class="nav-links">
       <li><a href="index.html" class="active">Repository Overview</a></li>
       
+      
+        <div class="nav-section-title">Documentation:</div>
+        
+          <li><a href="docs/UPDATE.html">UPDATE</a></li>
+        
       
     </ul>
     
@@ -37,12 +42,12 @@
       <div class="repo-stats">
         
         <div class="repo-stat">
-          <span>📝</span> <span>7 commits</span>
+          <span>📝</span> <span>31 commits</span>
         </div>
         
         
         <div class="repo-stat">
-          <span>📅</span> <span>Last updated: July 16, 2025</span>
+          <span>📅</span> <span>Last updated: August 26, 2025</span>
         </div>
         
         
@@ -131,10 +136,129 @@ directly to disk:</p>
     }
 </code></pre>
 
-<p>Note: if you want to read the content, the Content() io.Reader must be read
-<em>before</em> the Signature() io.Reader. If you read the signature first, the content
-bytes will be thrown away. If you then attempt to read the content, you will get
-an error. For clarification, see TestReadSignatureFirst.</p>
+<p><strong>Important Note on Read Order</strong>: If you want to read both content and signature,
+the Content() io.Reader MUST be read <em>before</em> the Signature() io.Reader. This
+limitation exists because SU3 files are a streaming format where content and
+signature are sequential in the file. When you read the signature first, the
+signature reader consumes any remaining content bytes to position the stream
+correctly. If you then try to read content, those bytes are no longer available.</p>
+
+<p>However, if you only need the signature (for verification without content access),
+you can read Signature() directly without calling Content().</p>
+
+<p>For clarification on this behavior, see TestReadSignatureFirst.</p>
+
+<h3 id="streaming-both-content-and-signature">Streaming Both Content and Signature</h3>
+
+<p>Here&rsquo;s a complete example showing how to stream both content and signature data while respecting the read order requirement:</p>
+
+<pre><code class="language-go">package main
+
+import (
+    &quot;bytes&quot;
+    &quot;errors&quot;
+    &quot;io&quot;
+    &quot;os&quot;
+    
+    &quot;github.com/go-i2p/su3&quot;
+)
+
+func streamContentAndSignature(body io.Reader, publicKey interface{}) error {
+    su3File, err := su3.Read(body)
+    if err != nil {
+        return err
+    }
+
+    // Stream content to file (MUST be done first)
+    contentFile, err := os.Create(&quot;content.dat&quot;)
+    if err != nil {
+        return err
+    }
+    defer contentFile.Close()
+
+    contentReader := su3File.Content(publicKey)
+    _, err = io.Copy(contentFile, contentReader)
+    if errors.Is(err, su3.ErrInvalidSignature) {
+        // Content was read but signature verification failed
+        os.Remove(&quot;content.dat&quot;) // Don't trust the content
+        return err
+    } else if err != nil {
+        return err
+    }
+
+    // Now stream signature to file (MUST be done after content)
+    signatureFile, err := os.Create(&quot;signature.dat&quot;) 
+    if err != nil {
+        return err
+    }
+    defer signatureFile.Close()
+
+    signatureReader := su3File.Signature()
+    _, err = io.Copy(signatureFile, signatureReader)
+    if err != nil {
+        return err
+    }
+
+    return nil // Success - both content and signature saved
+}
+</code></pre>
+
+<p><strong>Important:</strong> If you need to access the signature for manual verification without reading content first, you can call <code>Signature()</code> directly. However, if you want both content and signature data, always read content first as shown above.</p>
+
+<h2 id="supported-signature-types">Supported Signature Types</h2>
+
+<p>The SU3 library supports multiple signature algorithms. When using the <code>Content(publicKey interface{})</code> method, ensure you provide the correct public key type for the signature algorithm used:</p>
+
+<h3 id="rsa-signatures">RSA Signatures</h3>
+
+<ul>
+<li><code>RSA_SHA256_2048</code>: Requires <code>*rsa.PublicKey</code></li>
+<li><code>RSA_SHA384_3072</code>: Requires <code>*rsa.PublicKey</code><br>
+</li>
+<li><code>RSA_SHA512_4096</code>: Requires <code>*rsa.PublicKey</code></li>
+</ul>
+
+<h3 id="ecdsa-signatures">ECDSA Signatures</h3>
+
+<ul>
+<li><code>ECDSA_SHA256_P256</code>: Requires <code>*ecdsa.PublicKey</code></li>
+<li><code>ECDSA_SHA384_P384</code>: Requires <code>*ecdsa.PublicKey</code></li>
+<li><code>ECDSA_SHA512_P521</code>: Requires <code>*ecdsa.PublicKey</code></li>
+</ul>
+
+<h3 id="dsa-signatures-legacy">DSA Signatures (Legacy)</h3>
+
+<ul>
+<li><code>DSA_SHA1</code>: Requires <code>*dsa.PublicKey</code></li>
+</ul>
+
+<h3 id="eddsa-signatures">EdDSA Signatures</h3>
+
+<ul>
+<li><code>EdDSA_SHA512_Ed25519ph</code>: Requires <code>ed25519.PublicKey</code> (note: not a pointer)</li>
+</ul>
+
+<p>Example usage with EdDSA:</p>
+
+<pre><code class="language-go">import &quot;crypto/ed25519&quot;
+
+// Assuming you have an Ed25519 public key
+var publicKey ed25519.PublicKey = /* your key here */
+
+su3File, err := su3.Read(body)
+if err != nil {
+    // Handle error
+}
+
+// For EdDSA, pass the public key directly (not a pointer)
+contentReader := su3File.Content(publicKey)
+content, err := ioutil.ReadAll(contentReader)
+if errors.Is(err, su3.ErrInvalidSignature) {
+    // Signature verification failed
+} else if err != nil {
+    // Handle other errors  
+}
+</code></pre>
 
 <h2 id="usage">Usage</h2>
 
@@ -151,6 +275,8 @@ an error. For clarification, see TestReadSignatureFirst.</p>
 	ErrMissingUnusedByte14      = oops.Errorf(&quot;missing unused byte 14&quot;)
 	ErrMissingSignerIDLength    = oops.Errorf(&quot;missing signer ID length&quot;)
 	ErrMissingContentLength     = oops.Errorf(&quot;missing content length&quot;)
+	ErrContentLengthTooLarge    = oops.Errorf(&quot;content length exceeds maximum allowed size&quot;)
+	ErrSignatureLengthTooLarge  = oops.Errorf(&quot;signature length exceeds maximum allowed size&quot;)
 	ErrMissingUnusedByte24      = oops.Errorf(&quot;missing unused byte 24&quot;)
 	ErrMissingFileType          = oops.Errorf(&quot;missing or invalid file type&quot;)
 	ErrMissingUnusedByte26      = oops.Errorf(&quot;missing unused byte 26&quot;)
@@ -162,6 +288,7 @@ an error. For clarification, see TestReadSignatureFirst.</p>
 	ErrMissingSignature         = oops.Errorf(&quot;missing signature&quot;)
 	ErrInvalidPublicKey         = oops.Errorf(&quot;invalid public key&quot;)
 	ErrInvalidSignature         = oops.Errorf(&quot;invalid signature&quot;)
+	ErrInvalidSignatureLength   = oops.Errorf(&quot;signature length invalid for signature type&quot;)
 )
 </code></pre>
 
@@ -266,7 +393,7 @@ an error. For clarification, see TestReadSignatureFirst.</p>
                 eyedeekay
               </div>
               <div class="contributor-commits">
-                7 commits
+                31 commits
               </div>
             </div>
           </div>
@@ -278,7 +405,7 @@ an error. For clarification, see TestReadSignatureFirst.</p>
     </main>
     
     <footer class="page-footer">
-      <p>Generated on 2025-08-27 02:58:39 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
+      <p>Generated on 2025-08-27 03:11:22 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
     </footer>
   </div>
 </body>
