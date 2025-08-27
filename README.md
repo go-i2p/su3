@@ -77,6 +77,64 @@ you can read Signature() directly without calling Content().
 
 For clarification on this behavior, see TestReadSignatureFirst.
 
+### Streaming Both Content and Signature
+
+Here's a complete example showing how to stream both content and signature data while respecting the read order requirement:
+
+```go
+package main
+
+import (
+    "bytes"
+    "errors"
+    "io"
+    "os"
+    
+    "github.com/go-i2p/su3"
+)
+
+func streamContentAndSignature(body io.Reader, publicKey interface{}) error {
+    su3File, err := su3.Read(body)
+    if err != nil {
+        return err
+    }
+
+    // Stream content to file (MUST be done first)
+    contentFile, err := os.Create("content.dat")
+    if err != nil {
+        return err
+    }
+    defer contentFile.Close()
+
+    contentReader := su3File.Content(publicKey)
+    _, err = io.Copy(contentFile, contentReader)
+    if errors.Is(err, su3.ErrInvalidSignature) {
+        // Content was read but signature verification failed
+        os.Remove("content.dat") // Don't trust the content
+        return err
+    } else if err != nil {
+        return err
+    }
+
+    // Now stream signature to file (MUST be done after content)
+    signatureFile, err := os.Create("signature.dat") 
+    if err != nil {
+        return err
+    }
+    defer signatureFile.Close()
+
+    signatureReader := su3File.Signature()
+    _, err = io.Copy(signatureFile, signatureReader)
+    if err != nil {
+        return err
+    }
+
+    return nil // Success - both content and signature saved
+}
+```
+
+**Important:** If you need to access the signature for manual verification without reading content first, you can call `Signature()` directly. However, if you want both content and signature data, always read content first as shown above.
+
 ## Supported Signature Types
 
 The SU3 library supports multiple signature algorithms. When using the `Content(publicKey interface{})` method, ensure you provide the correct public key type for the signature algorithm used:
