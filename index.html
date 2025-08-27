@@ -13,7 +13,7 @@
         <a href="index.html">go-i2p/su3</a>
       </h2>
       <div class="repo-meta">
-        📝 31 commits
+        📝 42 commits
          • 📜 MIT License
       </div>
     </div>
@@ -24,7 +24,9 @@
       
         <div class="nav-section-title">Documentation:</div>
         
-          <li><a href="docs/UPDATE.html">UPDATE</a></li>
+          <li><a href="docs/UPDATE.html">Software Update Specification</a></li>
+        
+          <li><a href="docs/template.html">Template</a></li>
         
       
     </ul>
@@ -42,12 +44,12 @@
       <div class="repo-stats">
         
         <div class="repo-stat">
-          <span>📝</span> <span>31 commits</span>
+          <span>📝</span> <span>42 commits</span>
         </div>
         
         
         <div class="repo-stat">
-          <span>📅</span> <span>Last updated: August 26, 2025</span>
+          <span>📅</span> <span>Last updated: August 27, 2025</span>
         </div>
         
         
@@ -67,7 +69,7 @@
 
 <p>&ndash;</p>
 
-<pre><code>import &quot;github.com/go-i2p/go-i2p/lib/su3&quot;
+<pre><code>import &quot;github.com/go-i2p/su3&quot;
 </code></pre>
 
 <p><img src="su3.svg" alt="su3.svg" /></p>
@@ -136,129 +138,10 @@ directly to disk:</p>
     }
 </code></pre>
 
-<p><strong>Important Note on Read Order</strong>: If you want to read both content and signature,
-the Content() io.Reader MUST be read <em>before</em> the Signature() io.Reader. This
-limitation exists because SU3 files are a streaming format where content and
-signature are sequential in the file. When you read the signature first, the
-signature reader consumes any remaining content bytes to position the stream
-correctly. If you then try to read content, those bytes are no longer available.</p>
-
-<p>However, if you only need the signature (for verification without content access),
-you can read Signature() directly without calling Content().</p>
-
-<p>For clarification on this behavior, see TestReadSignatureFirst.</p>
-
-<h3 id="streaming-both-content-and-signature">Streaming Both Content and Signature</h3>
-
-<p>Here&rsquo;s a complete example showing how to stream both content and signature data while respecting the read order requirement:</p>
-
-<pre><code class="language-go">package main
-
-import (
-    &quot;bytes&quot;
-    &quot;errors&quot;
-    &quot;io&quot;
-    &quot;os&quot;
-    
-    &quot;github.com/go-i2p/su3&quot;
-)
-
-func streamContentAndSignature(body io.Reader, publicKey interface{}) error {
-    su3File, err := su3.Read(body)
-    if err != nil {
-        return err
-    }
-
-    // Stream content to file (MUST be done first)
-    contentFile, err := os.Create(&quot;content.dat&quot;)
-    if err != nil {
-        return err
-    }
-    defer contentFile.Close()
-
-    contentReader := su3File.Content(publicKey)
-    _, err = io.Copy(contentFile, contentReader)
-    if errors.Is(err, su3.ErrInvalidSignature) {
-        // Content was read but signature verification failed
-        os.Remove(&quot;content.dat&quot;) // Don't trust the content
-        return err
-    } else if err != nil {
-        return err
-    }
-
-    // Now stream signature to file (MUST be done after content)
-    signatureFile, err := os.Create(&quot;signature.dat&quot;) 
-    if err != nil {
-        return err
-    }
-    defer signatureFile.Close()
-
-    signatureReader := su3File.Signature()
-    _, err = io.Copy(signatureFile, signatureReader)
-    if err != nil {
-        return err
-    }
-
-    return nil // Success - both content and signature saved
-}
-</code></pre>
-
-<p><strong>Important:</strong> If you need to access the signature for manual verification without reading content first, you can call <code>Signature()</code> directly. However, if you want both content and signature data, always read content first as shown above.</p>
-
-<h2 id="supported-signature-types">Supported Signature Types</h2>
-
-<p>The SU3 library supports multiple signature algorithms. When using the <code>Content(publicKey interface{})</code> method, ensure you provide the correct public key type for the signature algorithm used:</p>
-
-<h3 id="rsa-signatures">RSA Signatures</h3>
-
-<ul>
-<li><code>RSA_SHA256_2048</code>: Requires <code>*rsa.PublicKey</code></li>
-<li><code>RSA_SHA384_3072</code>: Requires <code>*rsa.PublicKey</code><br>
-</li>
-<li><code>RSA_SHA512_4096</code>: Requires <code>*rsa.PublicKey</code></li>
-</ul>
-
-<h3 id="ecdsa-signatures">ECDSA Signatures</h3>
-
-<ul>
-<li><code>ECDSA_SHA256_P256</code>: Requires <code>*ecdsa.PublicKey</code></li>
-<li><code>ECDSA_SHA384_P384</code>: Requires <code>*ecdsa.PublicKey</code></li>
-<li><code>ECDSA_SHA512_P521</code>: Requires <code>*ecdsa.PublicKey</code></li>
-</ul>
-
-<h3 id="dsa-signatures-legacy">DSA Signatures (Legacy)</h3>
-
-<ul>
-<li><code>DSA_SHA1</code>: Requires <code>*dsa.PublicKey</code></li>
-</ul>
-
-<h3 id="eddsa-signatures">EdDSA Signatures</h3>
-
-<ul>
-<li><code>EdDSA_SHA512_Ed25519ph</code>: Requires <code>ed25519.PublicKey</code> (note: not a pointer)</li>
-</ul>
-
-<p>Example usage with EdDSA:</p>
-
-<pre><code class="language-go">import &quot;crypto/ed25519&quot;
-
-// Assuming you have an Ed25519 public key
-var publicKey ed25519.PublicKey = /* your key here */
-
-su3File, err := su3.Read(body)
-if err != nil {
-    // Handle error
-}
-
-// For EdDSA, pass the public key directly (not a pointer)
-contentReader := su3File.Content(publicKey)
-content, err := ioutil.ReadAll(contentReader)
-if errors.Is(err, su3.ErrInvalidSignature) {
-    // Signature verification failed
-} else if err != nil {
-    // Handle other errors  
-}
-</code></pre>
+<p>Note: if you want to read the content, the Content() io.Reader must be read
+<em>before</em> the Signature() io.Reader. If you read the signature first, the content
+bytes will be thrown away. If you then attempt to read the content, you will get
+an error. For clarification, see TestReadSignatureFirst.</p>
 
 <h2 id="usage">Usage</h2>
 
@@ -292,10 +175,34 @@ if errors.Is(err, su3.ErrInvalidSignature) {
 )
 </code></pre>
 
+<p>Error variables define all possible errors that can occur during SU3 processing.
+Moved from: su3.go</p>
+
+<h4 id="func-newsigningcertificate">func  NewSigningCertificate</h4>
+
+<pre><code class="language-go">func NewSigningCertificate(signerID string, privateKey *rsa.PrivateKey) ([]byte, error)
+</code></pre>
+
+<p>NewSigningCertificate creates a self-signed X.509 certificate for SU3 file
+signing. It generates a certificate with the specified signer ID and RSA private
+key for use in I2P reseed operations. The certificate is valid for 10 years and
+includes proper key usage extensions for digital signatures.</p>
+
+<p>Parameters:</p>
+
+<pre><code>- signerID: The common name and subject key ID for the certificate
+- privateKey: The RSA private key used to sign the certificate
+</code></pre>
+
+<p>Returns the DER-encoded certificate bytes or an error if generation fails.</p>
+
 <h4 id="type-contenttype">type ContentType</h4>
 
 <pre><code class="language-go">type ContentType string
 </code></pre>
+
+<p>ContentType represents the type of content contained within the SU3 file. Moved
+from: su3.go</p>
 
 <pre><code class="language-go">const (
 	UNKNOWN       ContentType = &quot;unknown&quot;
@@ -307,10 +214,15 @@ if errors.Is(err, su3.ErrInvalidSignature) {
 )
 </code></pre>
 
+<p>ContentType constants define supported content types. Moved from: su3.go</p>
+
 <h4 id="type-filetype">type FileType</h4>
 
 <pre><code class="language-go">type FileType string
 </code></pre>
+
+<p>FileType represents the type of file contained within the SU3 archive. Moved
+from: su3.go</p>
 
 <pre><code class="language-go">const (
 	ZIP      FileType = &quot;zip&quot;
@@ -322,6 +234,8 @@ if errors.Is(err, su3.ErrInvalidSignature) {
 	EXE      FileType = &quot;exe&quot;
 )
 </code></pre>
+
+<p>FileType constants define supported file types. Moved from: su3.go</p>
 
 <h4 id="type-su3">type SU3</h4>
 
@@ -336,25 +250,188 @@ if errors.Is(err, su3.ErrInvalidSignature) {
 }
 </code></pre>
 
+<p>SU3 represents a parsed SU3 file with its metadata and content readers. Extended
+to support both reading existing SU3 files and creating new ones. Moved from:
+su3.go</p>
+
+<h4 id="func-new">func  New</h4>
+
+<pre><code class="language-go">func New() *SU3
+</code></pre>
+
+<p>New creates a new SU3 file with default settings and current timestamp. The file
+is initialized with RSA-SHA512 signature type and a Unix timestamp version.
+Additional fields must be set before signing and distribution.</p>
+
 <h4 id="func-read">func  Read</h4>
 
 <pre><code class="language-go">func Read(reader io.Reader) (su3 *SU3, err error)
 </code></pre>
+
+<p>Read parses an SU3 file from the provided io.Reader and returns a *SU3 instance.
+The returned SU3 contains metadata about the file and provides access to content
+and signature. Moved from: su3.go</p>
+
+<h4 id="func-su3-bodybytes">func (*SU3) BodyBytes</h4>
+
+<pre><code class="language-go">func (su3 *SU3) BodyBytes() []byte
+</code></pre>
+
+<p>BodyBytes generates the binary representation of the SU3 file without the
+signature. This includes the magic header, metadata fields, and content data in
+the proper SU3 format.</p>
 
 <h4 id="func-su3-content">func (*SU3) Content</h4>
 
 <pre><code class="language-go">func (su3 *SU3) Content(publicKey interface{}) io.Reader
 </code></pre>
 
+<p>Content returns an io.Reader for accessing the SU3 file content. The publicKey
+parameter is used for signature verification during reading. If publicKey is
+nil, content can be read but ErrInvalidSignature will be returned.</p>
+
+<p>CRITICAL READ ORDER REQUIREMENT: If you want to read both content and signature,
+the Content() io.Reader MUST be read <em>before</em> the Signature() io.Reader. This
+limitation exists because SU3 files are a streaming format where content and
+signature are sequential.</p>
+
+<p>SIDE EFFECTS OF READING SIGNATURE() FIRST: When you read from Signature() before
+reading Content(), the signature reader will automatically consume and discard
+ALL remaining content bytes to position the stream correctly for signature
+reading. This means:</p>
+
+<pre><code>- Any unread content data is permanently lost
+- Subsequent calls to Content() will return an empty reader
+- No error is generated, but content access is no longer possible
+</code></pre>
+
+<p>WORKAROUNDS:</p>
+
+<pre><code>1. Always read Content() before Signature() if you need both
+2. If you only need signature verification without content access,
+   you can safely read Signature() directly
+3. For scenarios requiring signature-first access, consider using
+   bytes.Buffer or similar to fully buffer the SU3 data first
+</code></pre>
+
+<p>EXAMPLE - Correct order for accessing both:</p>
+
+<pre><code>contentReader := su3File.Content(publicKey)
+content, err := io.ReadAll(contentReader)  // Read content first
+if err != nil { /* handle error */ }
+
+signatureReader := su3File.Signature()     // Now safe to read signature
+signature, err := io.ReadAll(signatureReader)
+</code></pre>
+
+<p>For test cases demonstrating this behavior, see TestReadSignatureFirst. Moved
+from: su3.go</p>
+
+<h4 id="func-su3-headerbytes">func (*SU3) HeaderBytes</h4>
+
+<pre><code class="language-go">func (su3 *SU3) HeaderBytes() []byte
+</code></pre>
+
+<p>HeaderBytes generates just the SU3 header without content or signature. This is
+used for signature generation and matches what the parser stores in
+buff.Bytes().</p>
+
+<h4 id="func-su3-marshalbinary">func (*SU3) MarshalBinary</h4>
+
+<pre><code class="language-go">func (su3 *SU3) MarshalBinary() ([]byte, error)
+</code></pre>
+
+<p>MarshalBinary serializes the complete SU3 file including signature to binary
+format. This produces the final SU3 file data that can be written to disk or
+transmitted. The signature must be set before calling this method for a valid
+SU3 file.</p>
+
+<h4 id="func-su3-setcontent">func (*SU3) SetContent</h4>
+
+<pre><code class="language-go">func (su3 *SU3) SetContent(content []byte)
+</code></pre>
+
+<p>SetContent sets the content data for the SU3 file.</p>
+
+<h4 id="func-su3-setcontenttype">func (*SU3) SetContentType</h4>
+
+<pre><code class="language-go">func (su3 *SU3) SetContentType(contentType ContentType)
+</code></pre>
+
+<p>SetContentType sets the content type for the SU3 file.</p>
+
+<h4 id="func-su3-setfiletype">func (*SU3) SetFileType</h4>
+
+<pre><code class="language-go">func (su3 *SU3) SetFileType(fileType FileType)
+</code></pre>
+
+<p>SetFileType sets the file type for the SU3 file.</p>
+
+<h4 id="func-su3-setsignaturetype">func (*SU3) SetSignatureType</h4>
+
+<pre><code class="language-go">func (su3 *SU3) SetSignatureType(signatureType SignatureType)
+</code></pre>
+
+<p>SetSignatureType sets the signature type for the SU3 file.</p>
+
+<h4 id="func-su3-setsignerid">func (*SU3) SetSignerID</h4>
+
+<pre><code class="language-go">func (su3 *SU3) SetSignerID(signerID string)
+</code></pre>
+
+<p>SetSignerID sets the signer ID for the SU3 file.</p>
+
+<h4 id="func-su3-setversion">func (*SU3) SetVersion</h4>
+
+<pre><code class="language-go">func (su3 *SU3) SetVersion(version string)
+</code></pre>
+
+<p>SetVersion sets the version string for the SU3 file.</p>
+
+<h4 id="func-su3-sign">func (*SU3) Sign</h4>
+
+<pre><code class="language-go">func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error
+</code></pre>
+
+<p>Sign cryptographically signs the SU3 file using the provided RSA private key.
+The signature covers the file header and content but not the signature itself.
+The signature length is automatically determined by the RSA key size. Returns an
+error if the private key is nil or signature generation fails.</p>
+
 <h4 id="func-su3-signature">func (*SU3) Signature</h4>
 
 <pre><code class="language-go">func (su3 *SU3) Signature() io.Reader
 </code></pre>
 
+<p>Signature returns an io.Reader for accessing the SU3 file signature bytes.</p>
+
+<p>IMPORTANT STREAMING BEHAVIOR: Reading from this signature reader will
+automatically consume any unread content bytes from the underlying stream to
+correctly position for signature reading. This has the following implications:</p>
+
+<pre><code>- If Content() has not been fully read, all remaining content data
+  will be discarded when Signature() is first accessed
+- This makes subsequent Content() calls return empty readers
+- No error occurs, but content access becomes impossible
+</code></pre>
+
+<p>USAGE PATTERNS: 1. Signature-only access (safe): Call Signature() directly
+without Content() 2. Both content and signature: Read Content() completely
+before Signature() 3. Manual verification workflows: Read signature bytes for
+custom crypto</p>
+
+<p>The signature reader provides the raw signature bytes as stored in the SU3 file.
+For automatic signature verification, use Content(publicKey) instead.</p>
+
+<p>Moved from: su3.go</p>
+
 <h4 id="type-signaturetype">type SignatureType</h4>
 
 <pre><code class="language-go">type SignatureType string
 </code></pre>
+
+<p>SignatureType represents the type of cryptographic signature used in SU3 files.
+Moved from: su3.go</p>
 
 <pre><code class="language-go">const (
 	DSA_SHA1               SignatureType = &quot;DSA-SHA1&quot;
@@ -368,9 +445,12 @@ if errors.Is(err, su3.ErrInvalidSignature) {
 )
 </code></pre>
 
+<p>SignatureType constants define supported signature algorithms. Moved from:
+su3.go</p>
+
 <p>su3</p>
 
-<p>github.com/go-i2p/go-i2p/lib/su3</p>
+<p>github.com/go-i2p/su3</p>
 
 <p><a href="/template.md">go-i2p template file</a></p>
 
@@ -393,7 +473,7 @@ if errors.Is(err, su3.ErrInvalidSignature) {
                 eyedeekay
               </div>
               <div class="contributor-commits">
-                31 commits
+                42 commits
               </div>
             </div>
           </div>
@@ -405,7 +485,7 @@ if errors.Is(err, su3.ErrInvalidSignature) {
     </main>
     
     <footer class="page-footer">
-      <p>Generated on 2025-08-27 22:12:13 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
+      <p>Generated on 2025-08-27 23:11:30 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
     </footer>
   </div>
 </body>

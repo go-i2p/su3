@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UPDATE - go-i2p/su3</title>
+  <title>Software Update Specification - go-i2p/su3</title>
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
         <a href="../index.html">go-i2p/su3</a>
       </h2>
       <div class="repo-meta">
-        📝 31 commits
+        📝 42 commits
          • 📜 MIT License
       </div>
     </div>
@@ -24,7 +24,9 @@
       
         <div class="nav-section-title">Documentation:</div>
         
-          <li><a href="../docs/UPDATE.html" class="active">UPDATE</a></li>
+          <li><a href="../docs/UPDATE.html" class="active">Software Update Specification</a></li>
+        
+          <li><a href="../docs/template.html" >Template</a></li>
         
       
     </ul>
@@ -36,723 +38,471 @@
   
   <div class="main-content">
     <header class="page-header">
-      <h1>UPDATE - go-i2p/su3</h1>
+      <h1>Software Update Specification - go-i2p/su3</h1>
     </header>
     
     <main>
       <div class="doc-content">
-        <p>=============================</p>
+        <h1 id="software-update-specification">Software Update Specification</h1>
 
-<h1 id="software-update-specification">Software Update Specification</h1>
+<p><strong>Category:</strong> Design<br>
+<strong>Last Updated:</strong> 2022-08<br>
+<strong>Accurate For:</strong> 0.9.55</p>
 
-<p>.. meta::</p>
+<h2 id="table-of-contents">Table of Contents</h2>
 
-<pre><code>:category: Design
-:lastupdated: 2022-08
-:accuratefor: 0.9.55
-</code></pre>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#old-news-file-specification">Old News File Specification</a></li>
+<li><a href="#update-file-specification">Update File Specification</a></li>
+<li><a href="#old-update-file-specification">Old Update File Specification</a></li>
+<li><a href="#download-and-installation">Download and Installation</a></li>
+<li><a href="#su3-file-specification">SU3 File Specification</a></li>
+<li><a href="#su3-router-update-file-specification">SU3 Router Update File Specification</a></li>
+<li><a href="#su3-reseed-file-specification">SU3 Reseed File Specification</a></li>
+<li><a href="#su3-plugin-file-specification">SU3 Plugin File Specification</a></li>
+<li><a href="#su3-news-file-specification">SU3 News File Specification</a></li>
+<li><a href="#blocklist-file-specification">Blocklist File Specification</a></li>
+<li><a href="#future-work">Future Work</a></li>
+<li><a href="#references">References</a></li>
+</ul>
 
-<p>.. contents::</p>
+<h2 id="overview">Overview</h2>
 
-<h1 id="overview">Overview</h1>
+<p>I2P uses a simple, yet secure, system for automated software update. The router console periodically pulls a news file from a configurable I2P URL. There is a hardcoded backup URL pointing to the project website, in case the default project news host goes down.</p>
 
-<p>I2P uses a simple, yet secure, system for automated software update.  The
-router console periodically pulls a news file from a configurable I2P URL.
-There is a hardcoded backup URL pointing to the project website, in case the
-default project news host goes down.</p>
+<p>The contents of the news file are displayed on the home page of the router console. In addition, the news file contains the most recent version number of the software. If the version is higher than the router&rsquo;s version number, it will display an indication to the user that an update is available.</p>
 
-<p>The contents of the news file are displayed on the home page of the router
-console.  In addition, the news file contains the most recent version number of
-the software.  If the version is higher than the router&rsquo;s version number, it
-will display an indication to the user that an update is available.</p>
-
-<p>The router may optionally download, or download and install, the new version if
-configured to do so.</p>
+<p>The router may optionally download, or download and install, the new version if configured to do so.</p>
 
 <h2 id="old-news-file-specification">Old News File Specification</h2>
 
 <p>This format is replaced by the su3 news format as of release 0.9.17.</p>
 
-<p>The news.xml file may contain the following elements::</p>
+<p>The news.xml file may contain the following elements:</p>
 
-<pre><code>&lt;i2p.news date=&quot;$Date: 2010-01-22 00:00:00 $&quot; /&gt;
+<pre><code class="language-xml">&lt;i2p.news date=&quot;$Date: 2010-01-22 00:00:00 $&quot; /&gt;
 &lt;i2p.release version=&quot;0.7.14&quot; date=&quot;2010/01/22&quot; minVersion=&quot;0.6&quot; /&gt;
 </code></pre>
 
-<p>Parameters in the i2p.release entry are as follows.  All keys are
-case-insensitive. All values must be enclosed in double quotes.</p>
+<p>Parameters in the i2p.release entry are as follows. All keys are case-insensitive. All values must be enclosed in double quotes.</p>
 
-<pre><code>date
-    The release date of the router version.
+<ul>
+<li><strong>date</strong>: The release date of the router version. Unused. Format not specified.</li>
+<li><strong>minJavaVersion</strong>: The minimum version of Java required to run the current version. As of release 0.9.9.</li>
+<li><strong>minVersion</strong>: The minimum version of the router required to update to the current version. If a router is older than this, the user must (manually?) update to an intermediate version first. As of release 0.9.9.</li>
+<li><strong>su3Clearnet</strong>: One or more HTTP URLs where the .su3 update file may be found on the clearnet (non-I2P). Multiple URLs must be separated by a space or comma. As of release 0.9.9.</li>
+<li><strong>su3SSL</strong>: One or more HTTPS URLs where the .su3 update file may be found on the clearnet (non-I2P). Multiple URLs must be separated by a space or comma. As of release 0.9.9.</li>
+<li><strong>sudTorrent</strong>: The magnet link for the .sud (non-pack200) torrent of the update. As of release 0.9.4.</li>
+<li><strong>su2Torrent</strong>: The magnet link for the .su2 (pack200) torrent of the update. As of release 0.9.4.</li>
+<li><strong>su3Torrent</strong>: The magnet link for the .su3 (new format) torrent of the update. As of release 0.9.9.</li>
+<li><strong>version</strong>: Required. The latest current router version available.</li>
+</ul>
 
-    Unused. Format not specified.
-
-minJavaVersion
-    The minimum version of Java required to run the current version.
-
-    As of release 0.9.9.
-
-minVersion
-    The minimum version of the router required to update to the current
-    version. If a router is older than this, the user must (manually?)
-    update to an intermediate version first.
-
-    As of release 0.9.9.
-
-su3Clearnet
-    One or more HTTP URLs where the .su3 update file may be found on the
-    clearnet (non-I2P). Multiple URLs must be separated by a space or comma.
-
-    As of release 0.9.9.
-
-su3SSL
-    One or more HTTPS URLs where the .su3 update file may be found on the
-    clearnet (non-I2P). Multiple URLs must be separated by a space or comma.
-
-    As of release 0.9.9.
-
-sudTorrent
-    The magnet link for the .sud (non-pack200) torrent of the update.
-
-    As of release 0.9.4.
-
-su2Torrent
-    The magnet link for the .su2 (pack200) torrent of the update.
-
-    As of release 0.9.4.
-
-su3Torrent
-    The magnet link for the .su3 (new format) torrent of the update.
-
-    As of release 0.9.9.
-
-version
-    Required.
-
-    The latest current router version available.
-</code></pre>
-
-<p>The elements may be included inside XML comments to prevent interpretation by
-browsers.  The i2p.release element and version are required. All others are
-optional.  NOTE: Due to parser limitations an entire element must be on a
-single line.</p>
+<p>The elements may be included inside XML comments to prevent interpretation by browsers. The i2p.release element and version are required. All others are optional. NOTE: Due to parser limitations an entire element must be on a single line.</p>
 
 <h2 id="update-file-specification">Update File Specification</h2>
 
-<p>As of release 0.9.9, the signed update file, named i2pupdate.su3, will use the
-&ldquo;su3&rdquo; file format specified below.  Approved release signers will use 4096-bit
-RSA keys.  The X.509 public key certificates for these signers are distributed
-in the router installation packages.  The updates may contain certificates for
-new, approved signers, and/or contain a list of certificates to delete for
-revocation.</p>
+<p>As of release 0.9.9, the signed update file, named i2pupdate.su3, will use the &ldquo;su3&rdquo; file format specified below. Approved release signers will use 4096-bit RSA keys. The X.509 public key certificates for these signers are distributed in the router installation packages. The updates may contain certificates for new, approved signers, and/or contain a list of certificates to delete for revocation.</p>
 
 <h2 id="old-update-file-specification">Old Update File Specification</h2>
 
 <p>This format is obsolete as of release 0.9.9.</p>
 
-<p>The signed update file, traditionally named i2pupdate.sud, is simply a zip file
-with a prepended 56 byte header.  The header contains:</p>
+<p>The signed update file, traditionally named i2pupdate.sud, is simply a zip file with a prepended 56 byte header. The header contains:</p>
 
 <ul>
-<li>A 40-byte DSA [Signature]_</li>
+<li>A 40-byte DSA Signature</li>
 <li>A 16-byte I2P version in UTF-8, padded with trailing zeroes if necessary</li>
 </ul>
 
-<p>The signature covers only the zip archive - not the prepended version.  The
-signature must match one of the DSA [SigningPublicKey]_ configured into the
-router, which has a hardcoded default list of keys of the current project
-release managers.</p>
+<p>The signature covers only the zip archive - not the prepended version. The signature must match one of the DSA SigningPublicKey configured into the router, which has a hardcoded default list of keys of the current project release managers.</p>
 
-<p>For version comparison purposes, version fields contain [0-9]*, field
-separators are &lsquo;-&rsquo;, &lsquo;_&rsquo;, and &lsquo;.&rsquo;, and all other characters are ignored.</p>
+<p>For version comparison purposes, version fields contain [0-9]*, field separators are &lsquo;-&rsquo;, &lsquo;_&rsquo;, and &lsquo;.&rsquo;, and all other characters are ignored.</p>
 
-<p>As of version 0.8.8, the version must also be specified as a zip file comment
-in UTF-8, without the trailing zeroes.  The updating router verifes that the
-version in the header (not covered by the signature) matches the version in the
-zip file comment, which is covered by the signature.  This prevents spoofing of
-the version number in the header.</p>
+<p>As of version 0.8.8, the version must also be specified as a zip file comment in UTF-8, without the trailing zeroes. The updating router verifies that the version in the header (not covered by the signature) matches the version in the zip file comment, which is covered by the signature. This prevents spoofing of the version number in the header.</p>
 
 <h2 id="download-and-installation">Download and Installation</h2>
 
-<p>The router first downloads the header of the update file from one in a
-configurable list of I2P URLs, using the built-in HTTP client and proxy, and
-checks that the version is newer.  This prevents the problem of update hosts
-that do not have the latest file.  The router then downloads the full update
-file.  The router verifies that the update file version is newer before
-installation.  It also, of course, verifies the signature, and verifes that the
-zip file comment matches the header version, as explained above.</p>
+<p>The router first downloads the header of the update file from one in a configurable list of I2P URLs, using the built-in HTTP client and proxy, and checks that the version is newer. This prevents the problem of update hosts that do not have the latest file. The router then downloads the full update file. The router verifies that the update file version is newer before installation. It also, of course, verifies the signature, and verifies that the zip file comment matches the header version, as explained above.</p>
 
-<p>The zip file is extracted and copied to &ldquo;i2pupdate.zip&rdquo; in the I2P
-configuration directory (~/.i2p on Linux).</p>
+<p>The zip file is extracted and copied to &ldquo;i2pupdate.zip&rdquo; in the I2P configuration directory (~/.i2p on Linux).</p>
 
-<p>As of release 0.7.12, the router supports Pack200 decompression.  Files inside
-the zip archive with a .jar.pack or .war.pack suffix are transparently
-decompressed to a .jar or .war file.  Update files containing .pack files are
-traditionally named with a &lsquo;.su2&rsquo; suffix.  Pack200 shrinks the update files by
-about 60%.</p>
+<p>As of release 0.7.12, the router supports Pack200 decompression. Files inside the zip archive with a .jar.pack or .war.pack suffix are transparently decompressed to a .jar or .war file. Update files containing .pack files are traditionally named with a &lsquo;.su2&rsquo; suffix. Pack200 shrinks the update files by about 60%.</p>
 
-<p>As of release 0.8.7, the router will delete the libjbigi.so and libjcpuid.so
-files if the zip archive contains a lib/jbigi.jar file, so that the new files
-will be extracted from jbigi.jar.</p>
+<p>As of release 0.8.7, the router will delete the libjbigi.so and libjcpuid.so files if the zip archive contains a lib/jbigi.jar file, so that the new files will be extracted from jbigi.jar.</p>
 
-<p>As of release 0.8.12, if the zip archive contains a file deletelist.txt, the
-router will delete the files listed there. The format is:</p>
+<p>As of release 0.8.12, if the zip archive contains a file deletelist.txt, the router will delete the files listed there. The format is:</p>
 
 <ul>
-<li><p>One file name per line</p></li>
-
-<li><p>All file names are relative to the installation directory; no absolute file
-names allowed, no files starting with &ldquo;..&rdquo;</p></li>
-
-<li><p>Comments start with &lsquo;#&rsquo;</p></li>
+<li>One file name per line</li>
+<li>All file names are relative to the installation directory; no absolute file names allowed, no files starting with &ldquo;..&rdquo;</li>
+<li>Comments start with &lsquo;#&rsquo;</li>
 </ul>
 
 <p>The router will then delete the deletelist.txt file.</p>
 
-<p>.. _su3:</p>
-
 <h2 id="su3-file-specification">SU3 File Specification</h2>
 
-<p>This specification is used for router updates as of release 0.9.9, reseed data
-as of release 0.9.14, plugins as of release 0.9.15, and the news file as of
-release 0.9.17.</p>
+<p>This specification is used for router updates as of release 0.9.9, reseed data as of release 0.9.14, plugins as of release 0.9.15, and the news file as of release 0.9.17.</p>
 
-<p>Issues with the previous .sud/.su2 format
-&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;`</p>
+<h3 id="issues-with-the-previous-sud-su2-format">Issues with the previous .sud/.su2 format</h3>
 
 <ul>
-<li><p>No magic number or flags</p></li>
-
-<li><p>No way to specify compression, pack200 or not, or signing algo</p></li>
-
-<li><p>Version is not covered by signature, so it is enforced by requiring it to be
-in the zip file comment (for router files) or in the plugin.config file (for
-plugins)</p></li>
-
-<li><p>Signer not specified so verifier must try all known keys</p></li>
-
-<li><p>Signature-before-data format requires two passes to generate file</p></li>
+<li>No magic number or flags</li>
+<li>No way to specify compression, pack200 or not, or signing algo</li>
+<li>Version is not covered by signature, so it is enforced by requiring it to be in the zip file comment (for router files) or in the plugin.config file (for plugins)</li>
+<li>Signer not specified so verifier must try all known keys</li>
+<li>Signature-before-data format requires two passes to generate file</li>
 </ul>
 
-<p>Goals</p>
+<h3 id="goals">Goals</h3>
 
-<pre><code>* Fix above problems
+<ul>
+<li>Fix above problems</li>
+<li>Migrate to more secure signature algorithm</li>
+<li>Keep version info in same format and offset for compatibility with existing version checkers</li>
+<li>One-pass signature verification and file extraction</li>
+</ul>
 
-* Migrate to more secure signature algorithm
+<h3 id="specification">Specification</h3>
 
-* Keep version info in same format and offset for compatibility with existing
-  version checkers
+<table>
+<thead>
+<tr>
+<th>Bytes</th>
+<th>Contents</th>
+</tr>
+</thead>
 
-* One-pass signature verification and file extraction
+<tbody>
+<tr>
+<td>0-5</td>
+<td>Magic number &ldquo;I2Psu3&rdquo;</td>
+</tr>
 
-Specification
-`````````````
+<tr>
+<td>6</td>
+<td>unused = 0</td>
+</tr>
 
-======  ========================================================================
-Bytes   Contents
-======  ========================================================================
- 0-5    Magic number &quot;I2Psu3&quot;
-  6     unused = 0
-  7     su3 file format version = 0
+<tr>
+<td>7</td>
+<td>su3 file format version = 0</td>
+</tr>
 
- 8-9    Signature type
+<tr>
+<td>8-9</td>
+<td>Signature type<br>• 0x0000 = DSA-SHA1<br>• 0x0001 = ECDSA-SHA256-P256<br>• 0x0002 = ECDSA-SHA384-P384<br>• 0x0003 = ECDSA-SHA512-P521<br>• 0x0004 = RSA-SHA256-2048<br>• 0x0005 = RSA-SHA384-3072<br>• 0x0006 = RSA-SHA512-4096<br>• 0x0008 = EdDSA-SHA512-Ed25519ph</td>
+</tr>
 
-        * 0x0000 = DSA-SHA1
-        * 0x0001 = ECDSA-SHA256-P256
-        * 0x0002 = ECDSA-SHA384-P384
-        * 0x0003 = ECDSA-SHA512-P521
-        * 0x0004 = RSA-SHA256-2048
-        * 0x0005 = RSA-SHA384-3072
-        * 0x0006 = RSA-SHA512-4096
-        * 0x0008 = EdDSA-SHA512-Ed25519ph
+<tr>
+<td>10-11</td>
+<td>Signature length, e.g. 40 (0x0028) for DSA-SHA1. Must match that specified for the Signature type.</td>
+</tr>
 
-10-11   Signature length, e.g. 40 (0x0028) for DSA-SHA1. Must match that
-        specified for the [Signature]_ type.
- 12     unused = 0
+<tr>
+<td>12</td>
+<td>unused = 0</td>
+</tr>
 
- 13     Version length (in bytes not chars, including padding)
+<tr>
+<td>13</td>
+<td>Version length (in bytes not chars, including padding)<br>must be at least 16 (0x10) for compatibility</td>
+</tr>
 
-        must be at least 16 (0x10) for compatibility
+<tr>
+<td>14</td>
+<td>unused = 0</td>
+</tr>
 
- 14     unused = 0
- 15     Signer ID length (in bytes not chars)
-16-23   Content length (not including header or sig)
- 24     unused = 0
+<tr>
+<td>15</td>
+<td>Signer ID length (in bytes not chars)</td>
+</tr>
 
- 25     File type
+<tr>
+<td>16-23</td>
+<td>Content length (not including header or sig)</td>
+</tr>
 
-        * 0x00 = zip file
-        * 0x01 = xml file (as of 0.9.15)
-        * 0x02 = html file (as of 0.9.17)
-        * 0x03 = xml.gz file (as of 0.9.17)
-        * 0x04 = txt.gz file (as of 0.9.28)
-        * 0x05 = dmg file (as of 0.9.51)
-        * 0x06 = exe file (as of 0.9.51)
+<tr>
+<td>24</td>
+<td>unused = 0</td>
+</tr>
 
- 26     unused = 0
+<tr>
+<td>25</td>
+<td>File type<br>• 0x00 = zip file<br>• 0x01 = xml file (as of 0.9.15)<br>• 0x02 = html file (as of 0.9.17)<br>• 0x03 = xml.gz file (as of 0.9.17)<br>• 0x04 = txt.gz file (as of 0.9.28)<br>• 0x05 = dmg file (as of 0.9.51)<br>• 0x06 = exe file (as of 0.9.51)</td>
+</tr>
 
- 27     Content type
+<tr>
+<td>26</td>
+<td>unused = 0</td>
+</tr>
 
-        * 0x00 = unknown
-        * 0x01 = router update
-        * 0x02 = plugin or plugin update
-        * 0x03 = reseed data
-        * 0x04 = news feed (as of 0.9.15)
-        * 0x05 = blocklist feed (as of 0.9.28)
+<tr>
+<td>27</td>
+<td>Content type<br>• 0x00 = unknown<br>• 0x01 = router update<br>• 0x02 = plugin or plugin update<br>• 0x03 = reseed data<br>• 0x04 = news feed (as of 0.9.15)<br>• 0x05 = blocklist feed (as of 0.9.28)</td>
+</tr>
 
-28-39   unused = 0
+<tr>
+<td>28-39</td>
+<td>unused = 0</td>
+</tr>
 
-40-55+  Version, UTF-8 padded with trailing 0x00, 16 bytes minimum, length
-        specified at byte 13. Do not append 0x00 bytes if the length is 16 or
-        more.
+<tr>
+<td>40-55+</td>
+<td>Version, UTF-8 padded with trailing 0x00, 16 bytes minimum, length specified at byte 13. Do not append 0x00 bytes if the length is 16 or more.</td>
+</tr>
 
- xx+    ID of signer, (e.g. &quot;zzz@mail.i2p&quot;) UTF-8, not padded, length specified
-        at byte 15
+<tr>
+<td>xx+</td>
+<td>ID of signer, (e.g. &ldquo;zzz@mail.i2p&rdquo;) UTF-8, not padded, length specified at byte 15</td>
+</tr>
 
- xx+    Content:
+<tr>
+<td>xx+</td>
+<td>Content:<br>• Length specified in header at bytes 16-23<br>• Format specified in header at byte 25<br>• Content specified in header at byte 27</td>
+</tr>
 
-        * Length specified in header at bytes 16-23
-        * Format specified in header at byte 25
-        * Content specified in header at byte 27
+<tr>
+<td>xx+</td>
+<td>Signature: Length is specified in header at bytes 10-11, covers everything starting at byte 0</td>
+</tr>
+</tbody>
+</table>
+<p>All unused fields must be set to 0 for compatibility with future versions.</p>
 
- xx+    Signature: Length is specified in header at bytes 10-11, covers
-        everything starting at byte 0
-======  ========================================================================
+<h3 id="signature-details">Signature Details</h3>
 
-All unused fields must be set to 0 for compatibility with future versions.
+<p>The signature covers the entire header starting at byte 0, through the end of the content. We use raw signatures. Take the hash of the data (using the hash type implied by the signature type at bytes 8-9) and pass that to a &ldquo;raw&rdquo; sign or verify function (e.g. &ldquo;NONEwithRSA&rdquo; in Java).</p>
 
-Signature Details
-`````````````````
-The signature covers the entire header starting at byte 0, through the end of
-the content.  We use raw signatures. Take the hash of the data (using the hash
-type implied by the signature type at bytes 8-9) and pass that to a &quot;raw&quot; sign
-or verify function (e.g. &quot;NONEwithRSA&quot; in Java).
+<p>While signature verification and content extraction may be implemented in one pass, an implementation must read and buffer the first 10 bytes to determine the hash type before starting to verify.</p>
 
-While signature verification and content extraction may be implemented in one
-pass, an implementation must read and buffer the first 10 bytes to determine
-the hash type before starting to verify.
+<p>Signature lengths for the various signature types are given in the Signature specification. Pad the signature with leading zeros if necessary. See the cryptography details page for parameters of the various signature types.</p>
 
-Signature lengths for the various signature types are given in the [Signature]_
-specification.  Pad the signature with leading zeros if necessary.  See the
-cryptography details page [CRYPTO-SIG]_ for parameters of the various signature
-types.
+<h3 id="notes">Notes</h3>
 
-Notes
-</code></pre>
-
-<p>The content type specifies the trust domain.  For each content type, clients
-maintain a set of X.509 public key certificates for parties trusted to sign
-that content.  Only certificates for the specified content type may be used.
-The certificate is looked up by the ID of the signer.  Clients must verify that
-the content type is that expected for the application.</p>
+<p>The content type specifies the trust domain. For each content type, clients maintain a set of X.509 public key certificates for parties trusted to sign that content. Only certificates for the specified content type may be used. The certificate is looked up by the ID of the signer. Clients must verify that the content type is that expected for the application.</p>
 
 <p>All values are in network byte order (big endian).</p>
 
-<p>For a python implementation of Raw RSA signatures compatible with Java &ldquo;NONEwithRSA&rdquo;,
-see this Stack Overflow article: [Python]_</p>
+<p>For a python implementation of Raw RSA signatures compatible with Java &ldquo;NONEwithRSA&rdquo;, see this Stack Overflow article: [Python]</p>
 
 <h2 id="su3-router-update-file-specification">SU3 Router Update File Specification</h2>
 
-<p>SU3 Details</p>
-
-<pre><code>* SU3 Content Type: 1 (ROUTER UPDATE)
-
-* SU3 File Type: 0 (ZIP)
-
-* SU3 Version: The router version
-
-* Jar and war files in the zip are no longer compressed with pack200 as documented above
-  for &quot;su2&quot; files, because recent Java runtimes no longer support it.
-
-Notes
-`````
-* For releases, the SU3 version is the &quot;base&quot; router version, e.g. &quot;0.9.20&quot;.
-
-* For development builds, which are supported as of release 0.9.20, the SU3
-  version is the &quot;full&quot; router version, e.g. &quot;0.9.20-5&quot; or &quot;0.9.20-5-rc&quot;. See
-  RouterVersion.java [I2P-SRC]_.
-
-SU3 Reseed File Specification
------------------------------
-
-As of 0.9.14, reseed data is delivered in an &quot;su3&quot; file format.
-
-Goals
-`````
-* Signed files with strong signatures and trusted certificates to prevent
-  man-in-the-middle attacks that could boot victims into a separate, untrusted
-  network.
-
-* Use su3 file format already used for updates and plugins
-
-* Single compressed file to speed up reseeding, which was slow to fetch 200 files
-
-Specification
-`````````````
-1. The file must be named &quot;i2pseeds.su3&quot;.
-   As of 0.9.42, the requestor should append a query string &quot;?netid=2&quot; to the request URL,
-   assuming the current network ID of 2.
-   This may be used to prevent cross-network connections. Test networks should set
-   a different network ID. See proposal 147 for details.
-
-2. The file must be in the same directory as the router infos on the web server.
-
-3. A router will first try to fetch (index URL)/i2pseeds.su3; if that fails it
-   will fetch the index URL and then fetch the individual router info files
-   found in the links.
-
-SU3 Details
-</code></pre>
+<h3 id="su3-details">SU3 Details</h3>
 
 <ul>
-<li><p>SU3 Content Type: 3 (RESEED)</p></li>
+<li><strong>SU3 Content Type:</strong> 1 (ROUTER UPDATE)</li>
+<li><strong>SU3 File Type:</strong> 0 (ZIP)</li>
+<li><strong>SU3 Version:</strong> The router version</li>
+<li>Jar and war files in the zip are no longer compressed with pack200 as documented above for &ldquo;su2&rdquo; files, because recent Java runtimes no longer support it.</li>
+</ul>
 
-<li><p>SU3 File Type: 0 (ZIP)</p></li>
+<h3 id="notes-1">Notes</h3>
 
-<li><p>SU3 Version: Seconds since the epoch, in ASCII (date +%s).
-Does NOT roll over in 2038 or 2106.</p></li>
+<ul>
+<li>For releases, the SU3 version is the &ldquo;base&rdquo; router version, e.g. &ldquo;0.9.20&rdquo;.</li>
+<li>For development builds, which are supported as of release 0.9.20, the SU3 version is the &ldquo;full&rdquo; router version, e.g. &ldquo;0.9.20-5&rdquo; or &ldquo;0.9.20-5-rc&rdquo;. See RouterVersion.java.</li>
+</ul>
 
-<li><p>Router info files in the zip file must be at the &ldquo;top level&rdquo;. No directories
-are in the zip file.</p></li>
+<h2 id="su3-reseed-file-specification">SU3 Reseed File Specification</h2>
 
-<li><p>Router info files must be named &ldquo;routerInfo-(44 character base 64 router
-hash).dat&rdquo;, as in the old reseed mechanism. The I2P base 64 alphabet must be
-used.</p></li>
+<p>As of 0.9.14, reseed data is delivered in an &ldquo;su3&rdquo; file format.</p>
+
+<h3 id="goals-1">Goals</h3>
+
+<ul>
+<li>Signed files with strong signatures and trusted certificates to prevent man-in-the-middle attacks that could boot victims into a separate, untrusted network.</li>
+<li>Use su3 file format already used for updates and plugins</li>
+<li>Single compressed file to speed up reseeding, which was slow to fetch 200 files</li>
+</ul>
+
+<h3 id="specification-1">Specification</h3>
+
+<ol>
+<li><p>The file must be named &ldquo;i2pseeds.su3&rdquo;. As of 0.9.42, the requestor should append a query string &ldquo;?netid=2&rdquo; to the request URL, assuming the current network ID of 2. This may be used to prevent cross-network connections. Test networks should set a different network ID. See proposal 147 for details.</p></li>
+
+<li><p>The file must be in the same directory as the router infos on the web server.</p></li>
+
+<li><p>A router will first try to fetch (index URL)/i2pseeds.su3; if that fails it will fetch the index URL and then fetch the individual router info files found in the links.</p></li>
+</ol>
+
+<h3 id="su3-details-1">SU3 Details</h3>
+
+<ul>
+<li><strong>SU3 Content Type:</strong> 3 (RESEED)</li>
+<li><strong>SU3 File Type:</strong> 0 (ZIP)</li>
+<li><strong>SU3 Version:</strong> Seconds since the epoch, in ASCII (date +%s). Does NOT roll over in 2038 or 2106.</li>
+<li>Router info files in the zip file must be at the &ldquo;top level&rdquo;. No directories are in the zip file.</li>
+<li>Router info files must be named &ldquo;routerInfo-(44 character base 64 router hash).dat&rdquo;, as in the old reseed mechanism. The I2P base 64 alphabet must be used.</li>
 </ul>
 
 <h2 id="su3-plugin-file-specification">SU3 Plugin File Specification</h2>
 
 <p>As of 0.9.15, plugins may be packaged in an &ldquo;su3&rdquo; file format.</p>
 
-<p>SU3 Details</p>
-
-<pre><code>* SU3 Content Type: 2 (PLUGIN)
-
-* SU3 File Type: 0 (ZIP)
-
-  * See the plugin specification [PLUGIN]_ for details.
-
-* SU3 Version: The plugin version, must match that in plugin.config.
-
-* Jar and war files in the zip should not be compressed with pack200 as documented above
-  for &quot;su2&quot; files, as recent Java runtimes no longer support it.
-
-SU3 News File Specification
----------------------------
-
-As of 0.9.17, the news is delivered in an &quot;su3&quot; file format.
-
-Goals
-`````
-* Signed news with strong signatures and trusted certificates
-
-* Use su3 file format already used for updates, reseeding, and plugins
-
-* Standard XML format for use with standard parsers
-
-* Standard Atom format for use with standard feed readers and generators
-
-* Sanitization and verification of HTML before displaying on console
-
-* Suitable for easy implementation on Android and other platforms without an
-  HTML console
-
-SU3 Details
-</code></pre>
+<h3 id="su3-details-2">SU3 Details</h3>
 
 <ul>
-<li><p>SU3 Content Type: 4 (NEWS)</p></li>
+<li><strong>SU3 Content Type:</strong> 2 (PLUGIN)</li>
+<li><strong>SU3 File Type:</strong> 0 (ZIP)
 
-<li><p>SU3 File Type: 1 (XML) or 3 (XML.GZ)</p></li>
-
-<li><p>SU3 Version: Seconds since the epoch, in ASCII (date +%s).
-Does NOT roll over in 2038 or 2106.</p></li>
-
-<li><p>File Format: XML or gzipped XML, containing an [RFC-4287]_ (Atom) XML Feed.
-Charset must be UTF-8.</p></li>
+<ul>
+<li>See the plugin specification for details.</li>
+</ul></li>
+<li><strong>SU3 Version:</strong> The plugin version, must match that in plugin.config.</li>
+<li>Jar and war files in the zip should not be compressed with pack200 as documented above for &ldquo;su2&rdquo; files, as recent Java runtimes no longer support it.</li>
 </ul>
 
-<p>Specification
-&ldquo;&rdquo;&ldquo;&rdquo;&ldquo;&rdquo;`
-<strong>Atom <feed> Details:</strong></p>
+<h2 id="su3-news-file-specification">SU3 News File Specification</h2>
+
+<p>As of 0.9.17, the news is delivered in an &ldquo;su3&rdquo; file format.</p>
 
-<p>The following <feed> elements are used:</p>
+<h3 id="goals-2">Goals</h3>
 
-<pre><code>&lt;entry&gt;
-    A news item. See below.
+<ul>
+<li>Signed news with strong signatures and trusted certificates</li>
+<li>Use su3 file format already used for updates, reseeding, and plugins</li>
+<li>Standard XML format for use with standard parsers</li>
+<li>Standard Atom format for use with standard feed readers and generators</li>
+<li>Sanitization and verification of HTML before displaying on console</li>
+<li>Suitable for easy implementation on Android and other platforms without an HTML console</li>
+</ul>
 
-&lt;i2p:release&gt;
-    I2P update metadata. See below.
+<h3 id="su3-details-3">SU3 Details</h3>
 
-&lt;i2p:revocations&gt;
-    Certificate revocations. See below.
+<ul>
+<li><strong>SU3 Content Type:</strong> 4 (NEWS)</li>
+<li><strong>SU3 File Type:</strong> 1 (XML) or 3 (XML.GZ)</li>
+<li><strong>SU3 Version:</strong> Seconds since the epoch, in ASCII (date +%s). Does NOT roll over in 2038 or 2106.</li>
+<li><strong>File Format:</strong> XML or gzipped XML, containing an RFC-4287 (Atom) XML Feed. Charset must be UTF-8.</li>
+</ul>
 
-&lt;i2p:blocklist&gt;
-    Blocklist data. See below.
+<h3 id="specification-2">Specification</h3>
 
-&lt;updated&gt;
-    Required
+<h4 id="atom-feed-details">Atom <code>&lt;feed&gt;</code> Details</h4>
 
-    Timestamp for the feed (conforming to [RFC-4287]_ (Atom) section 3.3 and
-    [RFC-3339]_.
-</code></pre>
+<p>The following <code>&lt;feed&gt;</code> elements are used:</p>
 
-<p><strong>Atom <entry> Details:</strong></p>
+<ul>
+<li><strong><code>&lt;entry&gt;</code></strong>: A news item. See below.</li>
+<li><strong><code>&lt;i2p:release&gt;</code></strong>: I2P update metadata. See below.</li>
+<li><strong><code>&lt;i2p:revocations&gt;</code></strong>: Certificate revocations. See below.</li>
+<li><strong><code>&lt;i2p:blocklist&gt;</code></strong>: Blocklist data. See below.</li>
+<li><strong><code>&lt;updated&gt;</code></strong>: Required. Timestamp for the feed (conforming to RFC-4287 (Atom) section 3.3 and RFC-3339).</li>
+</ul>
 
-<p>Each Atom <entry> in the news feed may be parsed and displayed in the router console.
-The following elements are used:</p>
+<h4 id="atom-entry-details">Atom <code>&lt;entry&gt;</code> Details</h4>
 
-<pre><code>&lt;author&gt;
-    Optional
+<p>Each Atom <code>&lt;entry&gt;</code> in the news feed may be parsed and displayed in the router console. The following elements are used:</p>
 
-    Containing:
+<ul>
+<li><strong><code>&lt;author&gt;</code></strong> (Optional): Containing:
 
-    &lt;name&gt;
-        The name of the entry author
+<ul>
+<li><strong><code>&lt;name&gt;</code></strong>: The name of the entry author</li>
+</ul></li>
+<li><strong><code>&lt;content&gt;</code></strong> (Required): Content, must be type=&ldquo;xhtml&rdquo;. The XHTML will be sanitized with a whitelist of allowed elements and a blacklist of disallowed attributes. Clients may ignore an element, or the enclosing entry, or the entire feed when a non-whitelisted element is encountered.</li>
+<li><strong><code>&lt;link&gt;</code></strong> (Optional): Link for further information</li>
+<li><strong><code>&lt;summary&gt;</code></strong> (Optional): Short summary, suitable for a tooltip</li>
+<li><strong><code>&lt;title&gt;</code></strong> (Required): Title of the news entry</li>
+<li><strong><code>&lt;updated&gt;</code></strong> (Required): Timestamp for this entry (conforming to RFC-4287 (Atom) section 3.3 and RFC-3339).</li>
+</ul>
 
-&lt;content&gt;
-    Required
+<h4 id="atom-i2p-release-details">Atom <code>&lt;i2p:release&gt;</code> Details</h4>
 
-    Content, must be type=&quot;xhtml&quot;.
+<p>There must be at least one <code>&lt;i2p:release&gt;</code> entity in the feed. Each contains the following attributes and entities:</p>
 
-    The XHTML will be sanitized with a whitelist of allowed elements and a
-    blacklist of disallowed attributes. Clients may ignore an element, or
-    the enclosing entry, or the entire feed when a non-whitelisted element
-    is encountered.
+<ul>
+<li><strong>date (attribute)</strong> (Required): Timestamp for this entry (conforming to RFC-4287 (Atom) section 3.3 and RFC-3339). The date also may be in truncated format yyyy-mm-dd (without the &rsquo;T&rsquo;); this is the &ldquo;full-date&rdquo; format in RFC-3339. In this format the time is assumed to be 00:00:00 UTC for any processing.</li>
+<li><strong>minJavaVersion (attribute)</strong>: If present, the minimum version of Java required to run the current version.</li>
+<li><strong>minVersion (attribute)</strong>: If present, the minimum version of the router required to update to the current version. If a router is older than this, the user must (manually?) update to an intermediate version first.</li>
+<li><strong><code>&lt;i2p:version&gt;</code></strong> (Required): The latest current router version available.</li>
+<li><strong><code>&lt;i2p:update&gt;</code></strong>: An update file (one or more). It must contain at least one child.
 
-&lt;link&gt;
-    Optional
+<ul>
+<li><strong>type (attribute)</strong>: &ldquo;sud&rdquo;, &ldquo;su2&rdquo;, or &ldquo;su3&rdquo;. Must be unique across all <code>&lt;i2p:update&gt;</code> elements.</li>
+<li><strong><code>&lt;i2p:clearnet&gt;</code></strong>: Out-of-network direct download links (zero or more)
 
-    Link for further information
+<ul>
+<li><strong>href (attribute)</strong>: A standard clearnet http link</li>
+</ul></li>
+<li><strong><code>&lt;i2p:clearnetssl&gt;</code></strong>: Out-of-network direct download links (zero or more)
 
-&lt;summary&gt;
-    Optional
+<ul>
+<li><strong>href (attribute)</strong>: A standard clearnet https link</li>
+</ul></li>
+<li><strong><code>&lt;i2p:torrent&gt;</code></strong>: In-network magnet link
 
-    Short summary, suitable for a tooltip
+<ul>
+<li><strong>href (attribute)</strong>: A magnet link</li>
+</ul></li>
+<li><strong><code>&lt;i2p:url&gt;</code></strong>: In-network direct download links (zero or more)
 
-&lt;title&gt;
-    Required
+<ul>
+<li><strong>href (attribute)</strong>: An in-network http .i2p link</li>
+</ul></li>
+</ul></li>
+</ul>
 
-    Title of the news entry
+<h4 id="atom-i2p-revocations-details">Atom <code>&lt;i2p:revocations&gt;</code> Details</h4>
 
-&lt;updated&gt;
-    Required
+<p>This entity is optional and there is at most one <code>&lt;i2p:revocations&gt;</code> entity in the feed. This feature is supported as of release 0.9.26.</p>
 
-    Timestamp for this entry (conforming to [RFC-4287]_ (Atom) section 3.3
-    and [RFC-3339]_).
-</code></pre>
+<p>The <code>&lt;i2p:revocations&gt;</code> entity contains one or more <code>&lt;i2p:crl&gt;</code> entities. The <code>&lt;i2p:crl&gt;</code> entity contains the following attributes:</p>
 
-<p><strong>Atom <a href="i2p:release" target="_blank">i2p:release</a> Details:</strong></p>
+<ul>
+<li><strong>updated (attribute)</strong> (Required): Timestamp for this entry (conforming to RFC-4287 (Atom) section 3.3 and RFC-3339). The date also may be in truncated format yyyy-mm-dd (without the &rsquo;T&rsquo;); this is the &ldquo;full-date&rdquo; format in RFC-3339. In this format the time is assumed to be 00:00:00 UTC for any processing.</li>
+<li><strong>id (attribute)</strong> (Required): A unique id for the creator of this CRL.</li>
+<li><strong>(entity content)</strong> (Required): A standard base 64 encoded Certificate Revocation List (CRL) with newlines, starting with the line &lsquo;&mdash;&ndash;BEGIN X509 CRL&mdash;&ndash;&rsquo; and ending with the line &lsquo;&mdash;&ndash;END X509 CRL&mdash;&ndash;&rsquo;. See RFC-5280 for more information on CRLs.</li>
+</ul>
 
-<p>There must be at least one <a href="i2p:release" target="_blank">i2p:release</a> entity in the feed. Each contains the
-following attributes and entities:</p>
+<h4 id="atom-i2p-blocklist-details">Atom <code>&lt;i2p:blocklist&gt;</code> Details</h4>
 
-<pre><code>date (attribute)
-    Required
+<p>This entity is optional and there is at most one <code>&lt;i2p:blocklist&gt;</code> entity in the feed. This feature is scheduled for implementation in release 0.9.28. The specification below is preliminary and subject to change.</p>
 
-    Timestamp for this entry (conforming to [RFC-4287]_ (Atom) section 3.3
-    and [RFC-3339]_.
+<p>The <code>&lt;i2p:blocklist&gt;</code> entity contains one or more <code>&lt;i2p:block&gt;</code> or <code>&lt;i2p:unblock&gt;</code> entities, an &ldquo;updated&rdquo; entity, and &ldquo;signer&rdquo; and &ldquo;sig&rdquo; attributes:</p>
 
-    The date also may be in truncated format yyyy-mm-dd (without the 'T');
-    this is the &quot;full-date&quot; format in [RFC-3339]_. In this format the time
-    is assumed to be 00:00:00 UTC for any processing.
+<ul>
+<li><strong>signer (attribute)</strong> (Required): A unique id (UTF-8) for the public key used to sign this blocklist.</li>
+<li><strong>sig (attribute)</strong> (Required): A signature in the format code:b64sig, where code is the ASCII signature type number, and b64sig is the base 64 encoded signature (I2P alphabet). See below for specification of data to be signed.</li>
+<li><strong><code>&lt;updated&gt;</code></strong> (Required): Timestamp for the blocklist (conforming to RFC-4287 (Atom) section 3.3 and RFC-3339). The date also may be in truncated format yyyy-mm-dd (without the &rsquo;T&rsquo;); this is the &ldquo;full-date&rdquo; format in RFC-3339. In this format the time is assumed to be 00:00:00 UTC for any processing.</li>
+<li><strong><code>&lt;i2p:block&gt;</code></strong> (Optional, multiple entities are allowed): A single entry, either a literal IPv4 or IPv6 address, or a 44-character base 64 router hash (I2P alphabet). IPv6 addresses may be in abbreviated format (containing &ldquo;::&rdquo;). Support for entries with a netmask, e.g. x.y.0.0/16, is optional. Support for host names is optional.</li>
+<li><strong><code>&lt;i2p:unblock&gt;</code></strong> (Optional, multiple entities are allowed): Same format as <code>&lt;i2p:block&gt;</code>.</li>
+</ul>
 
-minJavaVersion (attribute)
-    If present, the minimum version of Java required to run the current
-    version.
-
-minVersion (attribute)
-    If present, the minimum version of the router required to update to the
-    current version. If a router is older than this, the user must
-    (manually?) update to an intermediate version first.
-
-&lt;i2p:version&gt;
-    Required
-
-    The latest current router version available.
-
-&lt;i2p:update&gt;
-    An update file (one or more). It must contain at least one child.
-
-    type (attribute)
-        &quot;sud&quot;, &quot;su2&quot;, or &quot;su3&quot;.
-
-        Must be unique across all &lt;i2p:update&gt; elements.
-
-    &lt;i2p:clearnet&gt;
-        Out-of-network direct download links (zero or more)
-
-        href (attribute)
-            A standard clearnet http link
-
-    &lt;i2p:clearnetssl&gt;
-        Out-of-network direct download links (zero or more)
-
-        href (attribute)
-            A standard clearnet https link
-
-    &lt;i2p:torrent&gt;
-        In-network magnet link
-
-        href (attribute)
-            A magnet link
-
-    &lt;i2p:url&gt;
-        In-network direct download links (zero or more)
-
-        href (attribute)
-            An in-network http .i2p link
-</code></pre>
-
-<p><strong>Atom <a href="i2p:revocations" target="_blank">i2p:revocations</a> Details:</strong></p>
-
-<p>This entity is optional and there is at most one <a href="i2p:revocations" target="_blank">i2p:revocations</a> entity in the
-feed. This feature is supported as of release 0.9.26.</p>
-
-<p>The <a href="i2p:revocations" target="_blank">i2p:revocations</a> entity contains one or more <a href="i2p:crl" target="_blank">i2p:crl</a> entities. The
-<a href="i2p:crl" target="_blank">i2p:crl</a> entity contains the following attributes:</p>
-
-<pre><code>updated (attribute)
-    Required
-
-    Timestamp for this entry (conforming to [RFC-4287]_ (Atom) section 3.3
-    and [RFC-3339]_.
-
-    The date also may be in truncated format yyyy-mm-dd (without the 'T');
-    this is the &quot;full-date&quot; format in [RFC-3339]_. In this format the time
-    is assumed to be 00:00:00 UTC for any processing.
-
-id (attribute)
-    Required
-
-    A unique id for the creator of this CRL.
-
-(entity content)
-    Required
-
-    A standard base 64 encoded Certificate Revocation List (CRL) with
-    newlines, starting with the line '-----BEGIN X509 CRL-----' and
-    ending with the line '-----END X509 CRL-----'. See [RFC-5280]_
-    for more information on CRLs.
-</code></pre>
-
-<p><strong>Atom <a href="i2p:blocklist" target="_blank">i2p:blocklist</a> Details:</strong></p>
-
-<p>This entity is optional and there is at most one <a href="i2p:blocklist" target="_blank">i2p:blocklist</a> entity in the
-feed. This feature is scheduled for implementation in release 0.9.28. The
-specification below is preliminary and subject to change.</p>
-
-<p>The <a href="i2p:blocklist" target="_blank">i2p:blocklist</a> entity contains one or more <a href="i2p:block" target="_blank">i2p:block</a> or <a href="i2p:unblock" target="_blank">i2p:unblock</a> entities,
-an &ldquo;updated&rdquo; entity, and &ldquo;signer&rdquo; and &ldquo;sig&rdquo; attributes:</p>
-
-<pre><code>signer (attribute)
-    Required
-
-    A unique id (UTF-8) for the public key used to sign this blocklist.
-
-sig (attribute)
-    Required
-
-    A signature in the format code:b64sig, where code is the ASCII signature
-    type number, and b64sig is the base 64 encoded signature (I2P alphabet).
-    See below for specification of data to be signed.
-
-&lt;updated&gt;
-    Required
-
-    Timestamp for the blocklist (conforming to [RFC-4287]_ (Atom) section 3.3
-    and [RFC-3339]_.
-
-    The date also may be in truncated format yyyy-mm-dd (without the 'T');
-    this is the &quot;full-date&quot; format in [RFC-3339]_. In this format the time
-    is assumed to be 00:00:00 UTC for any processing.
-
-&lt;i2p:block&gt;
-    Optional, multiple entities are allowed
-
-    A single entry, either a literal IPv4 or IPv6 address,
-    or a 44-character base 64 router hash (I2P alphabet).
-    IPv6 addresses may be in abbreviated format (containing &quot;::&quot;).
-    Support for entries with a netmask, e.g. x.y.0.0/16, is optional.
-    Support for host names is optional.
-
-&lt;i2p:unblock&gt;
-    Optional, multiple entities are allowed
-
-    Same format as &lt;i2p:block&gt;.
-</code></pre>
-
-<p>Signature specification: To generate the data to be signed or verified,
-concatenate the following data in ASCII encoding:
-The updated string followed by a newline (ASCII 0x0a),
-then each block entry in the order received with a newline after each,
-then each unblock entry in the order received with a newline after each.</p>
+<p><strong>Signature specification:</strong> To generate the data to be signed or verified, concatenate the following data in ASCII encoding: The updated string followed by a newline (ASCII 0x0a), then each block entry in the order received with a newline after each, then each unblock entry in the order received with a newline after each.</p>
 
 <h2 id="blocklist-file-specification">Blocklist File Specification</h2>
 
-<p>TBD, unimplemented, see proposal 130.
-Blocklist updates are delivered in the news file, see above.</p>
+<p>TBD, unimplemented, see proposal 130. Blocklist updates are delivered in the news file, see above.</p>
 
-<h1 id="future-work">Future Work</h1>
+<h2 id="future-work">Future Work</h2>
+
+<p>The router update mechanism is part of the web router console. There is currently no provision for updates of an embedded router lacking the router console.</p>
+
+<h2 id="references">References</h2>
 
 <ul>
-<li>The router update mechanism is part of the web router console. There is
-currently no provision for updates of an embedded router lacking the router
-console.</li>
+<li><strong>[CRYPTO-SIG]</strong>: {{ site_url(&lsquo;docs/how/cryptography&rsquo;, True) }}#sig</li>
+<li><strong>[I2P-SRC]</strong>: <a href="https://github.com/i2p/i2p.i2p" target="_blank">https://github.com/i2p/i2p.i2p</a></li>
+<li><strong>[PLUGIN]</strong>: {{ spec_url(&lsquo;plugin&rsquo;) }}</li>
+<li><strong>[Python]</strong>: <a href="https://stackoverflow.com/questions/59573121/python-rsa-sign-a-string-with-nonewithrsa/68301530#68301530" target="_blank">https://stackoverflow.com/questions/59573121/python-rsa-sign-a-string-with-nonewithrsa/68301530#68301530</a></li>
+<li><strong>[RFC-3339]</strong>: <a href="https://tools.ietf.org/html/rfc3339" target="_blank">https://tools.ietf.org/html/rfc3339</a></li>
+<li><strong>[RFC-4287]</strong>: <a href="https://tools.ietf.org/html/rfc4287" target="_blank">https://tools.ietf.org/html/rfc4287</a></li>
+<li><strong>[RFC-5280]</strong>: <a href="https://tools.ietf.org/html/rfc5280" target="_blank">https://tools.ietf.org/html/rfc5280</a></li>
+<li><strong>[Signature]</strong>: {{ ctags_url(&lsquo;Signature&rsquo;) }}</li>
+<li><strong>[SigningPublicKey]</strong>: {{ ctags_url(&lsquo;SigningPublicKey&rsquo;) }}</li>
 </ul>
-
-<h1 id="references">References</h1>
-
-<p>.. [CRYPTO-SIG]</p>
-
-<pre><code>{{ site_url('docs/how/cryptography', True) }}#sig
-</code></pre>
-
-<p>.. [I2P-SRC]</p>
-
-<pre><code>https://github.com/i2p/i2p.i2p
-</code></pre>
-
-<p>.. [PLUGIN]</p>
-
-<pre><code>{{ spec_url('plugin') }}
-</code></pre>
-
-<p>.. [Python]</p>
-
-<pre><code>https://stackoverflow.com/questions/59573121/python-rsa-sign-a-string-with-nonewithrsa/68301530#68301530
-</code></pre>
-
-<p>.. [RFC-3339]</p>
-
-<pre><code>https://tools.ietf.org/html/rfc3339
-</code></pre>
-
-<p>.. [RFC-4287]</p>
-
-<pre><code>https://tools.ietf.org/html/rfc4287
-</code></pre>
-
-<p>.. [RFC-5280]</p>
-
-<pre><code>https://tools.ietf.org/html/rfc5280
-</code></pre>
-
-<p>.. [Signature]</p>
-
-<pre><code>{{ ctags_url('Signature') }}
-</code></pre>
-
-<p>.. [SigningPublicKey]</p>
-
-<pre><code>{{ ctags_url('SigningPublicKey') }}
-</code></pre>
 
       </div>
     </main>
     
     <footer class="page-footer">
-      <p>Generated on 2025-08-27 22:12:13 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
+      <p>Generated on 2025-08-27 23:11:30 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
     </footer>
   </div>
 </body>
