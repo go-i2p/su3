@@ -5,14 +5,11 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha1"
 	"crypto/sha256"
-	"crypto/sha512"
 	"crypto/x509"
 	"encoding/binary"
 	"encoding/pem"
 	"fmt"
-	"hash"
 	"io"
 	"io/ioutil"
 	"os"
@@ -806,6 +803,7 @@ func TestBug3NilPointerDereferenceInSignatureReadingFixed(t *testing.T) {
 
 // TestBug4HashAlgorithmConsistency tests that hash algorithm selection is consistent
 // between parsing (reader.go) and creation (su3_struct.go) code paths.
+// This is a regression test for Bug #4 from AUDIT.md.
 func TestBug4HashAlgorithmConsistency(t *testing.T) {
 	testCases := []struct {
 		sigType SignatureType
@@ -825,56 +823,28 @@ func TestBug4HashAlgorithmConsistency(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Get hash from reader.go logic (parsing)
-			var readerHash hash.Hash
-			switch tc.sigType {
-			case DSA_SHA1:
-				readerHash = sha1.New()
-			case ECDSA_SHA256_P256, RSA_SHA256_2048:
-				readerHash = sha256.New()
-			case ECDSA_SHA384_P384, RSA_SHA384_3072:
-				readerHash = sha512.New384()
-			case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
-				readerHash = sha512.New()
-			default:
-				t.Fatalf("Unsupported signature type: %v", tc.sigType)
-			}
-
-			// Get hash from su3_struct.go logic (creation)
-			var hashType crypto.Hash
-			switch tc.sigType {
-			case DSA_SHA1:
-				hashType = crypto.SHA1
-			case ECDSA_SHA256_P256, RSA_SHA256_2048:
-				hashType = crypto.SHA256
-			case ECDSA_SHA384_P384, RSA_SHA384_3072:
-				hashType = crypto.SHA384
-			case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
-				hashType = crypto.SHA512
-			default:
-				t.Fatalf("Unsupported signature type: %v", tc.sigType)
-			}
-			creationHash := hashType.New()
+			// Both approaches should now use the same centralized helper functions
+			// and produce identical results
+			hash1, err1 := getHashForSignatureType(tc.sigType)
+			assert.NoError(t, err1)
+			
+			cryptoHash, err2 := getCryptoHashForSignatureType(tc.sigType)
+			assert.NoError(t, err2)
+			hash2 := cryptoHash.New()
 
 			// Hash the same data with both approaches
-			readerHash.Write(testData)
-			creationHash.Write(testData)
+			hash1.Write(testData)
+			hash2.Write(testData)
 
-			readerDigest := readerHash.Sum(nil)
-			creationDigest := creationHash.Sum(nil)
+			readerDigest := hash1.Sum(nil)
+			creationDigest := hash2.Sum(nil)
 
 			// Verify both approaches produce identical results
-			assert.Equal(t, readerDigest, creationDigest,
+			assert.Equal(t, readerDigest, creationDigest, 
 				"Hash digests should be identical for signature type %s", tc.sigType)
-
-			// Also verify the hash sizes match (additional sanity check)
-			assert.Equal(t, len(readerDigest), len(creationDigest),
-				"Hash digest lengths should match for signature type %s", tc.sigType)
 		})
 	}
-}
-
-// TestBug4HashAlgorithmConsistencyFixed verifies that the refactored hash algorithm
+}// TestBug4HashAlgorithmConsistencyFixed verifies that the refactored hash algorithm
 // selection uses centralized helper functions for consistency.
 func TestBug4HashAlgorithmConsistencyFixed(t *testing.T) {
 	testCases := []SignatureType{
