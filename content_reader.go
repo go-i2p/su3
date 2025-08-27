@@ -111,6 +111,12 @@ func (r *contentReader) performSignatureVerification() error {
 		return ErrInvalidSignature
 	}
 
+	// Check if signature reader is properly initialized
+	if r.su3.signatureReader == nil {
+		log.Error("Signature reader not initialized")
+		return ErrInvalidSignature
+	}
+
 	r.su3.signatureReader.getBytes()
 	if r.su3.signatureReader.err != nil {
 		log.WithError(r.su3.signatureReader.err).Error("Failed to get signature bytes")
