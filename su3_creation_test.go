@@ -2,7 +2,7 @@ package su3
 
 import (
 	"bytes"
-	"crypto/rand"
+	"github.com/go-i2p/crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"io"

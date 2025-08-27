@@ -230,7 +230,7 @@ func (r *contentReader) verifyECDSASignature(curveType string) error {
 }
 
 // verifyEdDSASignature verifies EdDSA-SHA512-Ed25519ph signatures.
-// According to RFC 8032, Ed25519ph requires proper domain separation 
+// According to RFC 8032, Ed25519ph requires proper domain separation
 // and pre-hashing, not direct hash digest verification.
 func (r *contentReader) verifyEdDSASignature() error {
 	pubKey, ok := r.su3.publicKey.(ed25519.PublicKey)
@@ -242,18 +242,18 @@ func (r *contentReader) verifyEdDSASignature() error {
 	// Ed25519ph requires domain separation context per RFC 8032
 	// For SU3 files, we use an empty context as this is the standard practice
 	context := []byte{}
-	
+
 	// Create dom2(phflag=1, context) as per RFC 8032
 	// dom2 format: "SigEd25519 no Ed25519 collisions" || phflag || len(context) || context
 	domSep := []byte("SigEd25519 no Ed25519 collisions")
-	domSep = append(domSep, 1) // phflag = 1 for Ed25519ph
+	domSep = append(domSep, 1)                  // phflag = 1 for Ed25519ph
 	domSep = append(domSep, byte(len(context))) // context length
-	domSep = append(domSep, context...) // context (empty for SU3)
-	
+	domSep = append(domSep, context...)         // context (empty for SU3)
+
 	// For Ed25519ph, we need to recreate the message that would have been
 	// signed. The hash we computed is the pre-hash of the original content.
 	// However, Go's ed25519.Verify expects the original message.
-	// 
+	//
 	// Since we don't have access to the original message content anymore
 	// (it's been hashed during content reading), we need to use a different
 	// approach for Ed25519ph verification in streaming scenarios.
@@ -261,7 +261,7 @@ func (r *contentReader) verifyEdDSASignature() error {
 	// The proper approach is to reconstruct the signing input:
 	// SHAKE256(dom4 || R || A || PH(M)) where PH(M) is our computed hash
 	preHashedContent := r.hash.Sum(nil)
-	
+
 	// For now, we'll use a simplified verification that matches the I2P specification
 	// This may need to be adjusted based on how I2P actually implements Ed25519ph
 	verified := ed25519.Verify(pubKey, preHashedContent, r.su3.signatureReader.bytes)
@@ -269,7 +269,7 @@ func (r *contentReader) verifyEdDSASignature() error {
 		log.Error("EdDSA-SHA512-Ed25519ph signature verification failed")
 		return ErrInvalidSignature
 	}
-	
+
 	log.Debug("EdDSA-SHA512-Ed25519ph signature verified successfully")
 	return nil
 }
