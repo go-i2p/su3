@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/sirupsen/logrus"
+	"github.com/go-i2p/logger"
 )
 
 // Read parses an SU3 file from the provided io.Reader and returns a *SU3 instance.
@@ -54,7 +54,7 @@ func Read(reader io.Reader) (su3 *SU3, err error) {
 		return nil, err
 	}
 
-	log.WithFields(logrus.Fields{
+	log.WithFields(logger.Fields{
 		"signature_type": su3.SignatureType,
 		"file_type":      su3.FileType,
 		"content_type":   su3.ContentType,

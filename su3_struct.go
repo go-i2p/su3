@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/samber/oops"
-	"github.com/sirupsen/logrus"
+	"github.com/go-i2p/logger"
 )
 
 // SU3 represents a parsed SU3 file with its metadata and content readers.
@@ -203,7 +203,7 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 		return err
 	}
 	if expectedKeySize > 0 && keySize != expectedKeySize {
-		log.WithFields(logrus.Fields{
+		log.WithFields(logger.Fields{
 			"signature_type":    su3.SignatureType,
 			"expected_key_size": expectedKeySize,
 			"actual_key_size":   keySize,
