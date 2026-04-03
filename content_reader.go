@@ -12,6 +12,7 @@ import (
 	"io"
 	"math/big"
 
+	goi2ped25519 "github.com/go-i2p/crypto/ed25519"
 	"github.com/samber/oops"
 )
 
@@ -236,8 +237,9 @@ func (r *contentReader) verifyECDSASignature(curveType string) error {
 }
 
 // verifyEdDSASignature verifies EdDSA-SHA512-Ed25519ph signatures.
-// According to RFC 8032, Ed25519ph requires proper domain separation
-// and pre-hashing, not direct hash digest verification.
+// Uses go-i2p/crypto/ed25519.Ed25519Verifier.VerifyHash which applies
+// ed25519.Verify against the SHA-512 digest of (header bytes || content bytes),
+// matching the I2P Ed25519ph convention used throughout go-i2p.
 func (r *contentReader) verifyEdDSASignature() error {
 	pubKey, ok := r.su3.publicKey.(ed25519.PublicKey)
 	if !ok {
@@ -245,33 +247,14 @@ func (r *contentReader) verifyEdDSASignature() error {
 		return ErrInvalidPublicKey
 	}
 
-	// Ed25519ph requires domain separation context per RFC 8032
-	// For SU3 files, we use an empty context as this is the standard practice
-	context := []byte{}
-
-	// Create dom2(phflag=1, context) as per RFC 8032
-	// dom2 format: "SigEd25519 no Ed25519 collisions" || phflag || len(context) || context
-	domSep := []byte("SigEd25519 no Ed25519 collisions")
-	domSep = append(domSep, 1)                  // phflag = 1 for Ed25519ph
-	domSep = append(domSep, byte(len(context))) // context length
-	domSep = append(domSep, context...)         // context (empty for SU3)
-
-	// For Ed25519ph, we need to recreate the message that would have been
-	// signed. The hash we computed is the pre-hash of the original content.
-	// However, Go's ed25519.Verify expects the original message.
-	//
-	// Since we don't have access to the original message content anymore
-	// (it's been hashed during content reading), we need to use a different
-	// approach for Ed25519ph verification in streaming scenarios.
-	//
-	// The proper approach is to reconstruct the signing input:
-	// SHAKE256(dom4 || R || A || PH(M)) where PH(M) is our computed hash
-	preHashedContent := r.hash.Sum(nil)
-
-	// For now, we'll use a simplified verification that matches the I2P specification
-	// This may need to be adjusted based on how I2P actually implements Ed25519ph
-	verified := ed25519.Verify(pubKey, preHashedContent, r.su3.signatureReader.bytes)
-	if !verified {
+	// Construct a go-i2p/crypto verifier from the raw public key bytes and
+	// verify the SHA-512 digest (header bytes || content bytes) directly.
+	verifier, err := goi2ped25519.Ed25519PublicKey(pubKey).NewVerifier()
+	if err != nil {
+		log.WithError(err).Error("Failed to create Ed25519 verifier")
+		return ErrInvalidPublicKey
+	}
+	if err := verifier.VerifyHash(r.hash.Sum(nil), r.su3.signatureReader.bytes); err != nil {
 		log.Error("EdDSA-SHA512-Ed25519ph signature verification failed")
 		return ErrInvalidSignature
 	}

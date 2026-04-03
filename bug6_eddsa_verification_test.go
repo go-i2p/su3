@@ -7,6 +7,7 @@ import (
 	"io"
 	"testing"
 
+	goi2ped25519 "github.com/go-i2p/crypto/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,15 +34,23 @@ func TestBug6EdDSASignatureVerificationGap(t *testing.T) {
 		edPublicKey, edPrivateKey, err := ed25519.GenerateKey(nil)
 		require.NoError(t, err)
 
-		// Create a test signature using Ed25519ph approach
-		// According to RFC 8032, Ed25519ph pre-hashes the message with SHA-512
-		hasher := sha512.New()
-		hasher.Write(testContent)
-		preHashedContent := hasher.Sum(nil)
+		// Ed25519ph: sign SHA-512(header || content) using go-i2p/crypto signer.
+		// Set the correct signature length before computing HeaderBytes so the
+		// header encodes the right value (Ed25519 signatures are always 64 bytes).
+		su3File.SignatureLength = 64
+		su3File.signature = make([]byte, 64) // placeholder with correct length
 
-		// Sign the pre-hashed content (simplified test signature)
-		// In practice, Ed25519ph would use proper domain separation
-		signature := ed25519.Sign(edPrivateKey, preHashedContent)
+		hasher := sha512.New()
+		hasher.Write(su3File.HeaderBytes())
+		hasher.Write(testContent)
+		digest := hasher.Sum(nil)
+
+		// Use go-i2p/crypto signer to produce the signature over the SHA-512 digest.
+		signer, err := goi2ped25519.Ed25519PrivateKey(edPrivateKey).NewSigner()
+		require.NoError(t, err)
+		signature, err := signer.SignHash(digest)
+		require.NoError(t, err)
+		require.Equal(t, 64, len(signature))
 
 		su3File.signature = signature
 		su3File.SignatureLength = uint16(len(signature))
@@ -55,13 +64,12 @@ func TestBug6EdDSASignatureVerificationGap(t *testing.T) {
 		parsedSU3, err := Read(reader)
 		require.NoError(t, err)
 
-		// Verify with the Ed25519 public key
+		// Verify with the Ed25519 public key — must succeed with the fixed implementation
 		contentReader := parsedSU3.Content(edPublicKey)
 		content, err := io.ReadAll(contentReader)
 
-		// The verification might fail due to the current implementation gap
-		// but the content should still be readable
-		assert.Greater(t, len(content), 0, "Content should be readable")
+		assert.NoError(t, err, "Ed25519ph verification should succeed with correct signature")
+		assert.Equal(t, testContent, content, "Content should match original")
 
 		// Check that we're dealing with the right signature type
 		assert.Equal(t, EdDSA_SHA512_Ed25519ph, parsedSU3.SignatureType)
