@@ -2,13 +2,12 @@ package su3
 
 import (
 	"bytes"
-	"crypto"
-	"github.com/go-i2p/crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/binary"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/go-i2p/crypto/rand"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -524,12 +525,12 @@ func TestHashInclusionBoundaryConditions(t *testing.T) {
 		if n > 0 {
 			allContent = append(allContent, buf[:n]...)
 		}
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
 			// Should not get signature verification error, this means hash was computed correctly
-			if err == ErrInvalidSignature {
+			if errors.Is(err, ErrInvalidSignature) {
 				t.Fatalf("Hash computation failed during boundary conditions: %v", err)
 			}
 			t.Fatalf("Unexpected error: %v", err)
@@ -605,7 +606,9 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	sum := hash.Sum(nil)
-	aliceSignature, err = rsa.SignPKCS1v15(rand.Reader, aliceFakeKey, crypto.SHA256, sum)
+	// Sign with hash=0 (raw mode without DigestInfo) to match how I2P reseed
+	// servers sign and how verifyRSASignature verifies.
+	aliceSignature, err = rsa.SignPKCS1v15(rand.Reader, aliceFakeKey, 0, sum)
 	if err != nil {
 		panic(err)
 	}

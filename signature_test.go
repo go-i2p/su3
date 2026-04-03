@@ -1,12 +1,12 @@
 package su3
 
 import (
-	"crypto"
-	"github.com/go-i2p/crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"testing"
+
+	"github.com/go-i2p/crypto/rand"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -45,8 +45,8 @@ func TestValidSignatureGeneration(t *testing.T) {
 	digest := h.Sum(nil)
 	t.Logf("Digest: %x", digest)
 
-	// Verify signature
-	err = rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, digest, su3File.signature)
+	// Verify signature with hash=0 (raw mode, matching how Sign() works)
+	err = rsa.VerifyPKCS1v15(publicKey, 0, digest, su3File.signature)
 	assert.NoError(t, err, "Signature should verify correctly")
 	t.Log("SUCCESS: Manual signature verification passed!")
 
@@ -59,7 +59,7 @@ func TestValidSignatureGeneration(t *testing.T) {
 
 	// Verify again using the certificate's public key
 	certPublicKey := cert.PublicKey.(*rsa.PublicKey)
-	err = rsa.VerifyPKCS1v15(certPublicKey, crypto.SHA256, digest, su3File.signature)
+	err = rsa.VerifyPKCS1v15(certPublicKey, 0, digest, su3File.signature)
 	assert.NoError(t, err, "Signature should verify with certificate public key")
 	t.Log("SUCCESS: Certificate-based signature verification passed!")
 }

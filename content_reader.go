@@ -153,6 +153,10 @@ func (r *contentReader) verifySignatureByType() error {
 }
 
 // verifyRSASignature verifies RSA signatures with the specified hash algorithm.
+// The digest is already computed by the contentReader's hash, so we pass hash=0
+// to rsa.VerifyPKCS1v15 for raw PKCS#1 v1.5 verification without DigestInfo.
+// This matches how I2P reseed servers sign SU3 files and is consistent with
+// checkSignature() in crypto.go.
 func (r *contentReader) verifyRSASignature(hashAlgorithm crypto.Hash) error {
 	pubKey, ok := r.su3.publicKey.(*rsa.PublicKey)
 	if !ok {
@@ -160,7 +164,9 @@ func (r *contentReader) verifyRSASignature(hashAlgorithm crypto.Hash) error {
 		return ErrInvalidPublicKey
 	}
 
-	err := rsa.VerifyPKCS1v15(pubKey, hashAlgorithm, r.hash.Sum(nil), r.su3.signatureReader.bytes)
+	// Use hash=0 because the digest is already hashed; reseed servers sign
+	// without the DigestInfo ASN.1 prefix in the PKCS#1 v1.5 block.
+	err := rsa.VerifyPKCS1v15(pubKey, 0, r.hash.Sum(nil), r.su3.signatureReader.bytes)
 	if err != nil {
 		log.WithError(err).Error("Signature verification failed")
 		return ErrInvalidSignature

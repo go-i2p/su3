@@ -2,7 +2,6 @@ package su3
 
 import (
 	"bytes"
-	"github.com/go-i2p/crypto/rand"
 	"crypto/rsa"
 	"encoding/binary"
 	"io"
@@ -10,8 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/samber/oops"
+	"github.com/go-i2p/crypto/rand"
+
 	"github.com/go-i2p/logger"
+	"github.com/samber/oops"
 )
 
 // SU3 represents a parsed SU3 file with its metadata and content readers.
@@ -233,8 +234,9 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 	digest := h.Sum(nil)
 
 	// Generate RSA signature using PKCS#1 v1.5 padding scheme
-	// Use the hashType parameter, not 0, to match what the verifier expects
-	sig, err := rsa.SignPKCS1v15(rand.Reader, privateKey, hashType, digest)
+	// Use hash=0 for raw signing without DigestInfo prefix, matching how
+	// I2P reseed servers sign and how verifyRSASignature verifies.
+	sig, err := rsa.SignPKCS1v15(rand.Reader, privateKey, 0, digest)
 	if err != nil {
 		log.WithError(err).Error("Failed to generate RSA signature for SU3 file")
 		return oops.Errorf("generating RSA signature: %w", err)
