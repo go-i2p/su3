@@ -2,11 +2,12 @@ package su3
 
 import (
 	"bytes"
-	"github.com/go-i2p/crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"io"
 	"testing"
+
+	"github.com/go-i2p/crypto/rand"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -309,6 +310,23 @@ func TestSU3VersionPadding(t *testing.T) {
 	// We can't easily extract and check the version field from the binary,
 	// but we can ensure no error occurs and the body is generated
 	assert.Greater(t, len(bodyBytes), 40) // Should be longer than just the header
+}
+
+// TestSetVersionTooLong verifies that SetVersion rejects strings longer than 255 bytes.
+func TestSetVersionTooLong(t *testing.T) {
+	su3File := New()
+
+	// Exactly 255 bytes should succeed
+	version255 := string(make([]byte, 255))
+	err := su3File.SetVersion(version255)
+	assert.NoError(t, err, "255-byte version string should be accepted")
+
+	// 256 bytes should fail
+	version256 := string(make([]byte, 256))
+	err = su3File.SetVersion(version256)
+	assert.ErrorIs(t, err, ErrVersionTooLong, "256-byte version string should be rejected")
+	// Version should not have changed
+	assert.Equal(t, version255, su3File.Version, "Version should not change after rejection")
 }
 
 func TestSU3SetterMethods(t *testing.T) {

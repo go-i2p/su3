@@ -260,8 +260,7 @@ func TestRead(t *testing.T) {
 			wantContent:   aliceContent,
 			wantSignature: aliceSignature,
 		},
-		/*{
-			// Skipping this for now, as the signature doesn't seem to match.
+		{
 			name:   "reseed-i2pgit.su3",
 			reader: fileReader(t, "testdata/reseed-i2pgit.su3"),
 			key:    fileRSAPubKey(t, "./testdata/reseed-hankhill19580_at_gmail.com.crt"),
@@ -276,9 +275,8 @@ func TestRead(t *testing.T) {
 			},
 			wantContent:   fileBytes(t, "testdata/reseed-i2pgit-content.zip"),
 			wantSignature: fileBytes(t, "testdata/reseed-i2pgit-signature"),
-		}, */
-		/*{
-			// Skipping this for now, as the signature doesn't seem to match.
+		},
+		{
 			name:   "snowflake-linux.su3",
 			reader: fileReader(t, "testdata/snowflake-linux.su3"),
 			key:    fileRSAPubKey(t, "./testdata/snowflake-hankhill19580_at_gmail.com.crt"),
@@ -295,7 +293,6 @@ func TestRead(t *testing.T) {
 			wantSignature: fileBytes(t, "testdata/snowflake-signature"),
 		},
 		{
-			// Skipping this for now, as the signature doesn't seem to match.
 			name:   "novg.su3",
 			reader: fileReader(t, "testdata/novg.su3"),
 			key:    fileRSAPubKey(t, "./testdata/igor_at_novg.net.crt"),
@@ -310,7 +307,7 @@ func TestRead(t *testing.T) {
 			},
 			wantContent:   fileBytes(t, "testdata/novg-content.zip"),
 			wantSignature: fileBytes(t, "testdata/novg-signature"),
-		},*/
+		},
 	}
 
 	for _, test := range tests {

@@ -2,13 +2,17 @@ package su3
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/rsa"
 	"encoding/binary"
 	"io"
+	"math/big"
 	"strconv"
 	"sync"
 	"time"
 
+	goi2ped25519 "github.com/go-i2p/crypto/ed25519"
 	"github.com/go-i2p/crypto/rand"
 
 	"github.com/go-i2p/logger"
@@ -136,11 +140,17 @@ func (su3 *SU3) SetSignerID(signerID string) {
 }
 
 // SetVersion sets the version string for the SU3 file.
-func (su3 *SU3) SetVersion(version string) {
+// Returns ErrVersionTooLong if version exceeds 255 bytes (the protocol maximum).
+func (su3 *SU3) SetVersion(version string) error {
+	if len(version) > 255 {
+		log.WithField("version_length", len(version)).Error("Version string exceeds maximum allowed length")
+		return ErrVersionTooLong
+	}
 	su3.mut.Lock()
 	defer su3.mut.Unlock()
 	su3.Version = version
 	log.WithField("version", version).Debug("Version set for SU3 file")
+	return nil
 }
 
 // SetFileType sets the file type for the SU3 file.
@@ -249,144 +259,182 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 	return nil
 }
 
-// HeaderBytes generates just the SU3 header without content or signature.
-// This is used for signature generation and matches what the parser stores in buff.Bytes().
-func (su3 *SU3) HeaderBytes() []byte {
-	var (
-		buf = new(bytes.Buffer)
-
-		skip    [1]byte
-		bigSkip [12]byte
-
-		versionBytes    = []byte(su3.Version)
-		signerIDBytes   = []byte(su3.SignerID)
-		signatureLength = su3.SignatureLength
-		signerIDLength  = uint8(len(signerIDBytes))
-		contentLength   = uint64(len(su3.content))
-	)
-
-	// Ensure version field meets minimum length requirement by zero-padding
-	minVersionLength := 16
-	if len(versionBytes) < minVersionLength {
-		paddedVersion := make([]byte, minVersionLength)
-		copy(paddedVersion, versionBytes)
-		versionBytes = paddedVersion
+// ecdsaSignatureParams returns the expected SU3 SignatureType and raw key byte
+// width for the given ECDSA private key's curve.
+func ecdsaSignatureParams(key *ecdsa.PrivateKey) (SignatureType, int, error) {
+	keyBytes := (key.Curve.Params().BitSize + 7) / 8
+	switch keyBytes {
+	case 32:
+		return ECDSA_SHA256_P256, keyBytes, nil
+	case 48:
+		return ECDSA_SHA384_P384, keyBytes, nil
+	case 66:
+		return ECDSA_SHA512_P521, keyBytes, nil
+	default:
+		return "", 0, oops.Errorf("unsupported ECDSA curve size: %d bits", key.Curve.Params().BitSize)
 	}
-	versionLength := uint8(len(versionBytes)) // Use the padded length (always 16)
+}
 
-	// Write SU3 file header in big-endian binary format (same format as parser expects)
+// SignECDSA signs the SU3 file using the provided ECDSA private key.
+// Produces raw fixed-length R||S encoding matching the I2P common-structures
+// specification: P-256 = 64 bytes, P-384 = 96 bytes, P-521 = 132 bytes.
+// SignatureType must be set to the appropriate ECDSA variant before calling.
+func (su3 *SU3) SignECDSA(key *ecdsa.PrivateKey) error {
+	su3.mut.Lock()
+	defer su3.mut.Unlock()
+
+	if key == nil {
+		log.Error("ECDSA private key cannot be nil for SU3 signing")
+		return oops.Errorf("private key cannot be nil")
+	}
+
+	expectedType, keyBytes, err := ecdsaSignatureParams(key)
+	if err != nil {
+		return err
+	}
+	if su3.SignatureType != expectedType {
+		return oops.Errorf("declared signature type %s does not match ECDSA key curve (expected %s)", su3.SignatureType, expectedType)
+	}
+
+	// Raw R||S length is fixed, so the header is stable before hashing.
+	su3.SignatureLength = uint16(2 * keyBytes)
+	su3.signature = make([]byte, 2*keyBytes)
+
+	hashType, err := getCryptoHashForSignatureType(su3.SignatureType)
+	if err != nil {
+		return err
+	}
+	h := hashType.New()
+	h.Write(su3.HeaderBytes())
+	h.Write(su3.content)
+	digest := h.Sum(nil)
+
+	r, s, err := ecdsa.Sign(rand.Reader, key, digest)
+	if err != nil {
+		log.WithError(err).Error("Failed to generate ECDSA signature")
+		return oops.Errorf("generating ECDSA signature: %w", err)
+	}
+
+	sig := make([]byte, 2*keyBytes)
+	new(big.Int).Set(r).FillBytes(sig[:keyBytes])
+	new(big.Int).Set(s).FillBytes(sig[keyBytes:])
+	su3.signature = sig
+
+	log.WithField("signature_length", len(sig)).Debug("SU3 file signed with ECDSA successfully")
+	return nil
+}
+
+// SignEdDSA signs the SU3 file using the provided Ed25519 private key.
+// Requires SignatureType to be EdDSA_SHA512_Ed25519ph.
+// The signature covers SHA-512(header bytes || content), consistent with
+// the verifyEdDSASignature path in content_reader.go.
+func (su3 *SU3) SignEdDSA(key ed25519.PrivateKey) error {
+	su3.mut.Lock()
+	defer su3.mut.Unlock()
+
+	if key == nil {
+		log.Error("EdDSA private key cannot be nil for SU3 signing")
+		return oops.Errorf("private key cannot be nil")
+	}
+	if su3.SignatureType != EdDSA_SHA512_Ed25519ph {
+		return oops.Errorf("signature type must be EdDSA_SHA512_Ed25519ph for EdDSA signing, got %s", su3.SignatureType)
+	}
+
+	// Ed25519 signatures are always 64 bytes; set upfront so the header is stable.
+	su3.SignatureLength = 64
+	su3.signature = make([]byte, 64)
+
+	hashType, err := getCryptoHashForSignatureType(su3.SignatureType)
+	if err != nil {
+		return err
+	}
+	h := hashType.New()
+	h.Write(su3.HeaderBytes())
+	h.Write(su3.content)
+	digest := h.Sum(nil)
+
+	signer, err := goi2ped25519.Ed25519PrivateKey(key).NewSigner()
+	if err != nil {
+		log.WithError(err).Error("Failed to create EdDSA signer")
+		return oops.Errorf("creating EdDSA signer: %w", err)
+	}
+	sig, err := signer.SignHash(digest)
+	if err != nil {
+		log.WithError(err).Error("Failed to generate EdDSA signature")
+		return oops.Errorf("generating EdDSA signature: %w", err)
+	}
+
+	su3.signature = sig
+	su3.SignatureLength = uint16(len(sig))
+
+	log.WithField("signature_length", len(sig)).Debug("SU3 file signed with EdDSA successfully")
+	return nil
+}
+
+// encodeHeader writes all SU3 header fields (excluding content and signature) into buf.
+// This is the single source of truth for the binary header format, shared by
+// HeaderBytes and BodyBytes to prevent the two paths from drifting out of sync.
+func (su3 *SU3) encodeHeader(buf *bytes.Buffer) {
+	versionBytes := []byte(su3.Version)
+	signerIDBytes := []byte(su3.SignerID)
+	skip := [1]byte{}
+	bigSkip := [12]byte{}
+
+	if len(versionBytes) < 16 {
+		padded := make([]byte, 16)
+		copy(padded, versionBytes)
+		versionBytes = padded
+	}
+
+	sigTypeBytes, ok := sigTypesReverse[su3.SignatureType]
+	if !ok {
+		log.WithField("signature_type", su3.SignatureType).Error("Unknown signature type in header encoding")
+		sigTypeBytes = sigTypesReverse[RSA_SHA512_4096]
+	}
+	fileTypeByte, ok := fileTypesReverse[su3.FileType]
+	if !ok {
+		log.WithField("file_type", su3.FileType).Error("Unknown file type in header encoding")
+		fileTypeByte = fileTypesReverse[ZIP]
+	}
+	contentTypeByte, ok := contentTypesReverse[su3.ContentType]
+	if !ok {
+		log.WithField("content_type", su3.ContentType).Error("Unknown content type in header encoding")
+		contentTypeByte = contentTypesReverse[UNKNOWN]
+	}
+
 	binary.Write(buf, binary.BigEndian, []byte(magicBytes))
 	binary.Write(buf, binary.BigEndian, skip)
 	binary.Write(buf, binary.BigEndian, uint8(0)) // Format version
-
-	// Write signature type as 2-byte value
-	sigTypeBytes, ok := sigTypesReverse[su3.SignatureType]
-	if !ok {
-		log.WithField("signature_type", su3.SignatureType).Error("Unknown signature type in HeaderBytes")
-		sigTypeBytes = sigTypesReverse[RSA_SHA512_4096] // Default fallback
-	}
 	binary.Write(buf, binary.BigEndian, sigTypeBytes)
-
-	binary.Write(buf, binary.BigEndian, signatureLength)
+	binary.Write(buf, binary.BigEndian, su3.SignatureLength)
 	binary.Write(buf, binary.BigEndian, skip)
-	binary.Write(buf, binary.BigEndian, versionLength) // Use padded length (16), not original length
+	binary.Write(buf, binary.BigEndian, uint8(len(versionBytes)))
 	binary.Write(buf, binary.BigEndian, skip)
-	binary.Write(buf, binary.BigEndian, signerIDLength)
-	binary.Write(buf, binary.BigEndian, contentLength)
+	binary.Write(buf, binary.BigEndian, uint8(len(signerIDBytes)))
+	binary.Write(buf, binary.BigEndian, uint64(len(su3.content)))
 	binary.Write(buf, binary.BigEndian, skip)
-
-	// Write file type as 1-byte value
-	fileTypeByte, ok := fileTypesReverse[su3.FileType]
-	if !ok {
-		log.WithField("file_type", su3.FileType).Error("Unknown file type in HeaderBytes")
-		fileTypeByte = fileTypesReverse[ZIP] // Default fallback
-	}
 	binary.Write(buf, binary.BigEndian, fileTypeByte)
 	binary.Write(buf, binary.BigEndian, skip)
-
-	// Write content type as 1-byte value
-	contentTypeByte, ok := contentTypesReverse[su3.ContentType]
-	if !ok {
-		log.WithField("content_type", su3.ContentType).Error("Unknown content type in HeaderBytes")
-		contentTypeByte = contentTypesReverse[UNKNOWN] // Default fallback
-	}
 	binary.Write(buf, binary.BigEndian, contentTypeByte)
 	binary.Write(buf, binary.BigEndian, bigSkip)
-	binary.Write(buf, binary.BigEndian, versionBytes) // Write padded version bytes
+	binary.Write(buf, binary.BigEndian, versionBytes)
 	binary.Write(buf, binary.BigEndian, signerIDBytes)
+}
 
-	// NOTE: Content and signature are NOT included in HeaderBytes - they are separate
-
+// HeaderBytes generates just the SU3 header without content or signature.
+// This is used for signature generation and matches what the parser stores in buff.Bytes().
+func (su3 *SU3) HeaderBytes() []byte {
+	buf := new(bytes.Buffer)
+	su3.encodeHeader(buf)
 	return buf.Bytes()
 }
 
 // BodyBytes generates the binary representation of the SU3 file without the signature.
 // This includes the magic header, metadata fields, and content data in the proper SU3 format.
 func (su3 *SU3) BodyBytes() []byte {
-	var (
-		buf = new(bytes.Buffer)
-
-		skip    [1]byte
-		bigSkip [12]byte
-
-		versionBytes    = []byte(su3.Version)
-		signerIDBytes   = []byte(su3.SignerID)
-		signatureLength = su3.SignatureLength
-		signerIDLength  = uint8(len(signerIDBytes))
-		contentLength   = uint64(len(su3.content))
-	)
-
-	// Ensure version field meets minimum length requirement by zero-padding
-	minVersionLength := 16
-	if len(versionBytes) < minVersionLength {
-		paddedVersion := make([]byte, minVersionLength)
-		copy(paddedVersion, versionBytes)
-		versionBytes = paddedVersion
-	}
-	versionLength := uint8(len(versionBytes)) // Use the padded length (always 16)
-
-	// Write SU3 file header in big-endian binary format
-	binary.Write(buf, binary.BigEndian, []byte(magicBytes))
-	binary.Write(buf, binary.BigEndian, skip)
-	binary.Write(buf, binary.BigEndian, uint8(0)) // Format version
-
-	// Write signature type as 2-byte value
-	sigTypeBytes, ok := sigTypesReverse[su3.SignatureType]
-	if !ok {
-		log.WithField("signature_type", su3.SignatureType).Error("Unknown signature type in BodyBytes")
-		sigTypeBytes = sigTypesReverse[RSA_SHA512_4096] // Default fallback
-	}
-	binary.Write(buf, binary.BigEndian, sigTypeBytes)
-
-	binary.Write(buf, binary.BigEndian, signatureLength)
-	binary.Write(buf, binary.BigEndian, skip)
-	binary.Write(buf, binary.BigEndian, versionLength)
-	binary.Write(buf, binary.BigEndian, skip)
-	binary.Write(buf, binary.BigEndian, signerIDLength)
-	binary.Write(buf, binary.BigEndian, contentLength)
-	binary.Write(buf, binary.BigEndian, skip)
-
-	// Write file type as 1-byte value
-	fileTypeByte, ok := fileTypesReverse[su3.FileType]
-	if !ok {
-		log.WithField("file_type", su3.FileType).Error("Unknown file type in BodyBytes")
-		fileTypeByte = fileTypesReverse[ZIP] // Default fallback
-	}
-	binary.Write(buf, binary.BigEndian, fileTypeByte)
-	binary.Write(buf, binary.BigEndian, skip)
-
-	// Write content type as 1-byte value
-	contentTypeByte, ok := contentTypesReverse[su3.ContentType]
-	if !ok {
-		log.WithField("content_type", su3.ContentType).Error("Unknown content type in BodyBytes")
-		contentTypeByte = contentTypesReverse[UNKNOWN] // Default fallback
-	}
-	binary.Write(buf, binary.BigEndian, contentTypeByte)
-	binary.Write(buf, binary.BigEndian, bigSkip)
-	binary.Write(buf, binary.BigEndian, versionBytes)
-	binary.Write(buf, binary.BigEndian, signerIDBytes)
+	buf := new(bytes.Buffer)
+	su3.encodeHeader(buf)
 	binary.Write(buf, binary.BigEndian, su3.content)
-
 	return buf.Bytes()
 }
 

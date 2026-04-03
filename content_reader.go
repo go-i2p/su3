@@ -21,11 +21,6 @@ type dsaSignature struct {
 	R, S *big.Int
 }
 
-// ecdsaSignature represents the ASN.1 DER structure of an ECDSA signature
-type ecdsaSignature struct {
-	R, S *big.Int
-}
-
 // contentReader provides access to the content of an SU3 file with signature verification.
 // Moved from: su3.go
 type contentReader struct {
@@ -156,8 +151,7 @@ func (r *contentReader) verifySignatureByType() error {
 // verifyRSASignature verifies RSA signatures with the specified hash algorithm.
 // The digest is already computed by the contentReader's hash, so we pass hash=0
 // to rsa.VerifyPKCS1v15 for raw PKCS#1 v1.5 verification without DigestInfo.
-// This matches how I2P reseed servers sign SU3 files and is consistent with
-// checkSignature() in crypto.go.
+// This matches how I2P reseed servers sign SU3 files.
 func (r *contentReader) verifyRSASignature(hashAlgorithm crypto.Hash) error {
 	pubKey, ok := r.su3.publicKey.(*rsa.PublicKey)
 	if !ok {
@@ -177,6 +171,10 @@ func (r *contentReader) verifyRSASignature(hashAlgorithm crypto.Hash) error {
 }
 
 // verifyDSASignature verifies DSA-SHA1 signatures.
+//
+// Deprecated: DSA-SHA1 is a Legacy algorithm in the I2P spec and crypto/dsa
+// was deprecated in Go 1.21. This function will be removed once DSA_SHA1
+// support is dropped.
 func (r *contentReader) verifyDSASignature() error {
 	pubKey, ok := r.su3.publicKey.(*dsa.PublicKey)
 	if !ok {
@@ -206,7 +204,9 @@ func (r *contentReader) verifyDSASignature() error {
 	return nil
 }
 
-// verifyECDSASignature verifies ECDSA signatures with the specified curve type.
+// verifyECDSASignature verifies ECDSA signatures using raw fixed-length R||S encoding.
+// Matches the I2P common-structures specification: P-256 = 64 bytes, P-384 = 96 bytes,
+// P-521 = 132 bytes. The signature is split at the midpoint into R and S components.
 func (r *contentReader) verifyECDSASignature(curveType string) error {
 	pubKey, ok := r.su3.publicKey.(*ecdsa.PublicKey)
 	if !ok {
@@ -215,20 +215,16 @@ func (r *contentReader) verifyECDSASignature(curveType string) error {
 	}
 
 	sigBytes := r.su3.signatureReader.bytes
-	if len(sigBytes) < 8 {
-		log.Error("ECDSA signature too short")
+	keyBytes := (pubKey.Curve.Params().BitSize + 7) / 8
+	if len(sigBytes) != 2*keyBytes {
+		log.WithField("curve_type", curveType).Error("ECDSA signature length does not match raw R||S encoding for curve")
 		return ErrInvalidSignature
 	}
 
-	var ecdsaSig ecdsaSignature
-	_, err := asn1.Unmarshal(sigBytes, &ecdsaSig)
-	if err != nil {
-		log.WithError(err).Error("Failed to parse ECDSA signature DER encoding")
-		return ErrInvalidSignature
-	}
+	rInt := new(big.Int).SetBytes(sigBytes[:keyBytes])
+	sInt := new(big.Int).SetBytes(sigBytes[keyBytes:])
 
-	verified := ecdsa.Verify(pubKey, r.hash.Sum(nil), ecdsaSig.R, ecdsaSig.S)
-	if !verified {
+	if !ecdsa.Verify(pubKey, r.hash.Sum(nil), rInt, sInt) {
 		log.WithField("curve_type", curveType).Error("ECDSA signature verification failed")
 		return ErrInvalidSignature
 	}

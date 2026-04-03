@@ -17,6 +17,9 @@ const maxSignatureLength = 1024
 // SignatureType constants define supported signature algorithms.
 // Moved from: su3.go
 const (
+	// Deprecated: DSA-SHA1 is a Legacy algorithm in the I2P spec and crypto/dsa
+	// was deprecated in Go 1.21. Future Go releases may remove the package.
+	// Use ECDSA_SHA256_P256 or EdDSA_SHA512_Ed25519ph for new files.
 	DSA_SHA1               SignatureType = "DSA-SHA1"
 	ECDSA_SHA256_P256      SignatureType = "ECDSA-SHA256-P256"
 	ECDSA_SHA384_P384      SignatureType = "ECDSA-SHA384-P384"
@@ -79,6 +82,7 @@ var (
 	ErrInvalidPublicKey         = oops.Errorf("invalid public key")
 	ErrInvalidSignature         = oops.Errorf("invalid signature")
 	ErrInvalidSignatureLength   = oops.Errorf("signature length invalid for signature type")
+	ErrVersionTooLong           = oops.Errorf("version string too long (max 255 bytes)")
 )
 
 // Mapping tables for converting bytes to enumerated types.
