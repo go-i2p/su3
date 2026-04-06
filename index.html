@@ -13,7 +13,7 @@
         <a href="index.html">go-i2p/su3</a>
       </h2>
       <div class="repo-meta">
-        📝 46 commits
+        📝 48 commits
          • 📜 MIT License
       </div>
     </div>
@@ -44,12 +44,12 @@
       <div class="repo-stats">
         
         <div class="repo-stat">
-          <span>📝</span> <span>46 commits</span>
+          <span>📝</span> <span>48 commits</span>
         </div>
         
         
         <div class="repo-stat">
-          <span>📅</span> <span>Last updated: April 3, 2026</span>
+          <span>📅</span> <span>Last updated: April 6, 2026</span>
         </div>
         
         
@@ -142,6 +142,52 @@ directly to disk:</p>
 <em>before</em> the Signature() io.Reader. If you read the signature first, the content
 bytes will be thrown away. If you then attempt to read the content, you will get
 an error. For clarification, see TestReadSignatureFirst.</p>
+
+<h2 id="logging">Logging</h2>
+
+<p>This package uses <a href="https://github.com/go-i2p/logger" target="_blank"><code>github.com/go-i2p/logger</code></a> for structured logging. Every log call includes <code>pkg</code> and <code>func</code> fields for traceability.</p>
+
+<h3 id="environment-variables">Environment Variables</h3>
+
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Value</th>
+<th>Effect</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><code>DEBUG_I2P</code></td>
+<td><code>debug</code></td>
+<td>Enables debug-level log output</td>
+</tr>
+
+<tr>
+<td><code>WARNFAIL_I2P</code></td>
+<td><code>true</code></td>
+<td>Promotes warnings to fatal errors</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="example">Example</h3>
+
+<pre><code class="language-bash"># Enable debug logging
+DEBUG_I2P=debug ./my-app
+
+# Enable debug logging with warnings as fatal errors
+DEBUG_I2P=debug WARNFAIL_I2P=true ./my-app
+</code></pre>
+
+<p>Sample log output:</p>
+
+<pre><code>level=debug msg=&quot;Starting to read SU3 file&quot; func=Read pkg=su3
+level=debug msg=&quot;Magic bytes verified&quot; func=readAndValidateMagicBytes pkg=su3
+level=debug msg=&quot;Signature type read&quot; func=readSignatureInfo pkg=su3 signature_type=RSA-SHA512-4096
+</code></pre>
 
 <h2 id="usage">Usage</h2>
 
@@ -473,7 +519,7 @@ su3.go</p>
                 eyedeekay
               </div>
               <div class="contributor-commits">
-                46 commits
+                48 commits
               </div>
             </div>
           </div>
@@ -485,7 +531,7 @@ su3.go</p>
     </main>
     
     <footer class="page-footer">
-      <p>Generated on 2026-04-06 20:31:55 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
+      <p>Generated on 2026-04-06 20:46:06 • <a href="https://github.com/go-i2p/su3" target="_blank">View on GitHub</a></p>
     </footer>
   </div>
 </body>
