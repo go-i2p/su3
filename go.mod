@@ -3,7 +3,7 @@ module github.com/go-i2p/su3
 go 1.25.0
 
 require (
-	github.com/go-i2p/crypto v0.1.4-0.20260406210557-f8ca3b342919
+	github.com/go-i2p/crypto v0.1.4-0.20260406220629-2f56adbb81fd
 	github.com/go-i2p/logger v0.1.5
 	github.com/samber/oops v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -19,8 +19,8 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/samber/lo v1.53.0 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
-	go.opentelemetry.io/otel v1.42.0 // indirect
-	go.opentelemetry.io/otel/trace v1.42.0 // indirect
+	go.opentelemetry.io/otel v1.43.0 // indirect
+	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
