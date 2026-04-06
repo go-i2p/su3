@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/go-i2p/logger"
 	"github.com/samber/oops"
 )
 
@@ -16,19 +17,19 @@ func readAndValidateMagicBytes(reader io.Reader, buff *bytes.Buffer) error {
 	mbytes := make([]byte, len(magicBytes))
 	l, err := reader.Read(mbytes)
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read magic bytes")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readAndValidateMagicBytes"}).WithError(err).Error("Failed to read magic bytes")
 		return oops.Errorf("reading magic bytes: %w", err)
 	}
 	if l != len(mbytes) {
-		log.Error("Missing magic bytes")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readAndValidateMagicBytes"}).Error("Missing magic bytes")
 		return ErrMissingMagicBytes
 	}
 	if string(mbytes) != magicBytes {
-		log.Error("Invalid magic bytes")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readAndValidateMagicBytes"}).Error("Invalid magic bytes")
 		return ErrMissingMagicBytes
 	}
 	buff.Write(mbytes)
-	log.Debug("Magic bytes verified")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readAndValidateMagicBytes"}).Debug("Magic bytes verified")
 	return nil
 }
 
@@ -40,32 +41,32 @@ func readFileFormatHeader(reader io.Reader, buff *bytes.Buffer) error {
 	// Unused byte 6.
 	l, err := reader.Read(unused[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read unused byte 6")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileFormatHeader"}).WithError(err).Error("Failed to read unused byte 6")
 		return oops.Errorf("reading unused byte 6: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing unused byte 6")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileFormatHeader"}).Error("Missing unused byte 6")
 		return ErrMissingUnusedByte6
 	}
 	buff.Write(unused[:])
-	log.Debug("Read unused byte 6")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileFormatHeader"}).Debug("Read unused byte 6")
 
 	// SU3 file format version (always 0).
 	l, err = reader.Read(unused[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read SU3 file format version")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileFormatHeader"}).WithError(err).Error("Failed to read SU3 file format version")
 		return oops.Errorf("reading SU3 file format version: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing SU3 file format version")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileFormatHeader"}).Error("Missing SU3 file format version")
 		return ErrMissingFileFormatVersion
 	}
 	if unused[0] != 0x00 {
-		log.Error("Invalid SU3 file format version")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileFormatHeader"}).Error("Invalid SU3 file format version")
 		return ErrMissingFileFormatVersion
 	}
 	buff.Write(unused[:])
-	log.Debug("SU3 file format version verified")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileFormatHeader"}).Debug("SU3 file format version verified")
 
 	return nil
 }
@@ -77,38 +78,40 @@ func readSignatureInfo(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (Signatur
 	sigTypeBytes := [2]byte{}
 	l, err := reader.Read(sigTypeBytes[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read signature type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readSignatureInfo"}).WithError(err).Error("Failed to read signature type")
 		return "", oops.Errorf("reading signature type: %w", err)
 	}
 	if l != 2 {
-		log.Error("Missing signature type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readSignatureInfo"}).Error("Missing signature type")
 		return "", ErrMissingSignatureType
 	}
 	sigType, ok := sigTypes[sigTypeBytes]
 	if !ok {
-		log.WithField("signature_type", sigTypeBytes).Error("Unsupported signature type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readSignatureInfo", "signature_type": sigTypeBytes}).Error("Unsupported signature type")
 		return "", ErrUnsupportedSignatureType
 	}
 	su3.SignatureType = sigType
 	buff.Write(sigTypeBytes[:])
-	log.WithField("signature_type", sigType).Debug("Signature type read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readSignatureInfo", "signature_type": sigType}).Debug("Signature type read")
 
 	// Signature length.
 	sigLengthBytes := [2]byte{}
 	l, err = reader.Read(sigLengthBytes[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read signature length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readSignatureInfo"}).WithError(err).Error("Failed to read signature length")
 		return "", oops.Errorf("reading signature length: %w", err)
 	}
 	if l != 2 {
-		log.Error("Missing signature length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readSignatureInfo"}).Error("Missing signature length")
 		return "", ErrMissingSignatureLength
 	}
 	sigLen := binary.BigEndian.Uint16(sigLengthBytes[:])
 
 	// Validate signature length matches expected length for signature type
 	if err := validateSignatureLength(sigType, sigLen); err != nil {
-		log.WithFields(map[string]interface{}{
+		log.WithFields(logger.Fields{
+			"pkg":              "su3",
+			"func":             "readSignatureInfo",
 			"signature_type":   sigType,
 			"signature_length": sigLen,
 		}).Error("Invalid signature length for signature type")
@@ -117,7 +120,7 @@ func readSignatureInfo(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (Signatur
 
 	su3.SignatureLength = sigLen
 	buff.Write(sigLengthBytes[:])
-	log.WithField("signature_length", sigLen).Debug("Signature length read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readSignatureInfo", "signature_length": sigLen}).Debug("Signature length read")
 
 	return sigType, nil
 }
@@ -130,62 +133,62 @@ func readLengthFields(reader io.Reader, su3 *SU3, buff *bytes.Buffer) (uint16, u
 	// Unused byte 12.
 	l, err := reader.Read(unused[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read unused byte 12")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).WithError(err).Error("Failed to read unused byte 12")
 		return 0, 0, oops.Errorf("reading unused byte 12: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing unused byte 12")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).Error("Missing unused byte 12")
 		return 0, 0, ErrMissingUnusedByte12
 	}
 	buff.Write(unused[:])
-	log.Debug("Read unused byte 12")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).Debug("Read unused byte 12")
 
 	// Version length.
 	verLengthBytes := [1]byte{}
 	l, err = reader.Read(verLengthBytes[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read version length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).WithError(err).Error("Failed to read version length")
 		return 0, 0, oops.Errorf("reading version length: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing version length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).Error("Missing version length")
 		return 0, 0, ErrMissingVersionLength
 	}
 	verLen := uint16(verLengthBytes[0])
 	if verLen < 16 {
-		log.WithField("version_length", verLen).Error("Version length too short")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields", "version_length": verLen}).Error("Version length too short")
 		return 0, 0, ErrVersionTooShort
 	}
 	buff.Write(verLengthBytes[:])
-	log.WithField("version_length", verLen).Debug("Version length read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields", "version_length": verLen}).Debug("Version length read")
 
 	// Unused byte 14.
 	l, err = reader.Read(unused[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read unused byte 14")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).WithError(err).Error("Failed to read unused byte 14")
 		return 0, 0, oops.Errorf("reading unused byte 14: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing unused byte 14")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).Error("Missing unused byte 14")
 		return 0, 0, ErrMissingUnusedByte14
 	}
 	buff.Write(unused[:])
-	log.Debug("Read unused byte 14")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).Debug("Read unused byte 14")
 
 	// Signer ID length.
 	sigIDLengthBytes := [1]byte{}
 	l, err = reader.Read(sigIDLengthBytes[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read signer ID length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).WithError(err).Error("Failed to read signer ID length")
 		return 0, 0, oops.Errorf("reading signer id length: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing signer ID length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields"}).Error("Missing signer ID length")
 		return 0, 0, ErrMissingSignerIDLength
 	}
 	signIDLen := uint16(sigIDLengthBytes[0])
 	buff.Write(sigIDLengthBytes[:])
-	log.WithField("signer_id_length", signIDLen).Debug("Signer ID length read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readLengthFields", "signer_id_length": signIDLen}).Debug("Signer ID length read")
 
 	return verLen, signIDLen, nil
 }
@@ -195,21 +198,21 @@ func readContentLength(reader io.Reader, su3 *SU3, buff *bytes.Buffer) error {
 	contentLengthBytes := [8]byte{}
 	l, err := reader.Read(contentLengthBytes[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read content length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readContentLength"}).WithError(err).Error("Failed to read content length")
 		return oops.Errorf("reading content length: %w", err)
 	}
 	if l != 8 {
-		log.Error("Missing content length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readContentLength"}).Error("Missing content length")
 		return ErrMissingContentLength
 	}
 	contentLen := binary.BigEndian.Uint64(contentLengthBytes[:])
 	if contentLen > maxContentLength {
-		log.WithField("content_length", contentLen).WithField("max_content_length", maxContentLength).Error("Content length exceeds maximum allowed size")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readContentLength", "content_length": contentLen, "max_content_length": maxContentLength}).Error("Content length exceeds maximum allowed size")
 		return ErrContentLengthTooLarge
 	}
 	su3.ContentLength = contentLen
 	buff.Write(contentLengthBytes[:])
-	log.WithField("content_length", contentLen).Debug("Content length read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readContentLength", "content_length": contentLen}).Debug("Content length read")
 	return nil
 }
 
@@ -218,21 +221,21 @@ func readFileType(reader io.Reader, su3 *SU3, buff *bytes.Buffer) error {
 	fileTypeBytes := [1]byte{}
 	l, err := reader.Read(fileTypeBytes[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read file type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileType"}).WithError(err).Error("Failed to read file type")
 		return oops.Errorf("reading file type: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing file type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileType"}).Error("Missing file type")
 		return ErrMissingFileType
 	}
 	fileType, ok := fileTypes[fileTypeBytes[0]]
 	if !ok {
-		log.WithField("file_type_byte", fileTypeBytes[0]).Error("Invalid file type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileType", "file_type_byte": fileTypeBytes[0]}).Error("Invalid file type")
 		return ErrMissingFileType
 	}
 	su3.FileType = fileType
 	buff.Write(fileTypeBytes[:])
-	log.WithField("file_type", fileType).Debug("File type read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileType", "file_type": fileType}).Debug("File type read")
 	return nil
 }
 
@@ -241,21 +244,21 @@ func readContentType(reader io.Reader, su3 *SU3, buff *bytes.Buffer) error {
 	contentTypeBytes := [1]byte{}
 	l, err := reader.Read(contentTypeBytes[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read content type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readContentType"}).WithError(err).Error("Failed to read content type")
 		return oops.Errorf("reading content type: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing content type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readContentType"}).Error("Missing content type")
 		return ErrMissingContentType
 	}
 	contentType, ok := contentTypes[contentTypeBytes[0]]
 	if !ok {
-		log.WithField("content_type_byte", contentTypeBytes[0]).Error("Invalid content type")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readContentType", "content_type_byte": contentTypeBytes[0]}).Error("Invalid content type")
 		return ErrMissingContentType
 	}
 	su3.ContentType = contentType
 	buff.Write(contentTypeBytes[:])
-	log.WithField("content_type", contentType).Debug("Content type read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readContentType", "content_type": contentType}).Debug("Content type read")
 	return nil
 }
 
@@ -271,15 +274,15 @@ func readFileMetadata(reader io.Reader, su3 *SU3, buff *bytes.Buffer) error {
 	// Unused byte 24.
 	l, err := reader.Read(unused[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read unused byte 24")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileMetadata"}).WithError(err).Error("Failed to read unused byte 24")
 		return oops.Errorf("reading unused byte 24: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing unused byte 24")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileMetadata"}).Error("Missing unused byte 24")
 		return ErrMissingUnusedByte24
 	}
 	buff.Write(unused[:])
-	log.Debug("Read unused byte 24")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileMetadata"}).Debug("Read unused byte 24")
 
 	if err := readFileType(reader, su3, buff); err != nil {
 		return err
@@ -288,15 +291,15 @@ func readFileMetadata(reader io.Reader, su3 *SU3, buff *bytes.Buffer) error {
 	// Unused byte 26.
 	l, err = reader.Read(unused[:])
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Error("Failed to read unused byte 26")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileMetadata"}).WithError(err).Error("Failed to read unused byte 26")
 		return oops.Errorf("reading unused byte 26: %w", err)
 	}
 	if l != 1 {
-		log.Error("Missing unused byte 26")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileMetadata"}).Error("Missing unused byte 26")
 		return ErrMissingUnusedByte26
 	}
 	buff.Write(unused[:])
-	log.Debug("Read unused byte 26")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readFileMetadata"}).Debug("Read unused byte 26")
 
 	return readContentType(reader, su3, buff)
 }
@@ -308,16 +311,16 @@ func readUnusedBytes28To39(reader io.Reader, buff *bytes.Buffer) error {
 	for i := 0; i < 12; i++ {
 		l, err := reader.Read(unused[:])
 		if err != nil && !errors.Is(err, io.EOF) {
-			log.WithError(err).Error("Failed to read unused bytes 28-39")
+			log.WithFields(logger.Fields{"pkg": "su3", "func": "readUnusedBytes28To39"}).WithError(err).Error("Failed to read unused bytes 28-39")
 			return oops.Errorf("reading unused bytes 28-39: %w", err)
 		}
 		if l != 1 {
-			log.WithField("byte_number", 28+i).Error("Missing unused byte")
+			log.WithFields(logger.Fields{"pkg": "su3", "func": "readUnusedBytes28To39", "byte_number": 28 + i}).Error("Missing unused byte")
 			return ErrMissingUnusedBytes28To39
 		}
 		buff.Write(unused[:])
 	}
-	log.Debug("Read unused bytes 28-39")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readUnusedBytes28To39"}).Debug("Read unused bytes 28-39")
 	return nil
 }
 
@@ -328,11 +331,11 @@ func readFixedLengthField(reader io.Reader, buff *bytes.Buffer, name string, len
 	data := make([]byte, length)
 	l, err := reader.Read(data)
 	if err != nil && !errors.Is(err, io.EOF) {
-		log.WithError(err).Errorf("Failed to read %s", name)
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFixedLengthField"}).WithError(err).Errorf("Failed to read %s", name)
 		return nil, oops.Errorf("reading %s: %w", name, err)
 	}
 	if l != int(length) {
-		log.Errorf("Missing %s", name)
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "readFixedLengthField"}).Errorf("Missing %s", name)
 		return nil, missingErr
 	}
 	buff.Write(data)
@@ -347,14 +350,14 @@ func readVersionAndSignerID(reader io.Reader, su3 *SU3, buff *bytes.Buffer, verL
 		return err
 	}
 	su3.Version = strings.TrimRight(string(versionBytes), "\x00")
-	log.WithField("version", su3.Version).Debug("Version read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readVersionAndSignerID", "version": su3.Version}).Debug("Version read")
 
 	signerIDBytes, err := readFixedLengthField(reader, buff, "signer id", signIDLen, ErrMissingSignerID)
 	if err != nil {
 		return err
 	}
 	su3.SignerID = string(signerIDBytes)
-	log.WithField("signer_id", su3.SignerID).Debug("Signer ID read")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "readVersionAndSignerID", "signer_id": su3.SignerID}).Debug("Signer ID read")
 
 	return nil
 }

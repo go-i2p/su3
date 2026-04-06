@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 
+	"github.com/go-i2p/logger"
 	"github.com/samber/oops"
 )
 
@@ -20,7 +21,7 @@ type signatureReader struct {
 // Note: This method should only be called while holding the SU3 mutex.
 // Moved from: su3.go
 func (r *signatureReader) getBytes() {
-	log.Debug("Getting signature bytes")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.getBytes"}).Debug("Getting signature bytes")
 
 	if err := r.consumeRemainingContent(); err != nil {
 		r.err = err
@@ -48,7 +49,7 @@ func (r *signatureReader) consumeRemainingContent() error {
 	// Note: We can safely access contentReader.finished here because
 	// this method is only called while holding the SU3 mutex.
 	if !r.su3.contentReader.finished {
-		log.Warn("Content not fully read, reading remaining content")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.consumeRemainingContent"}).Warn("Content not fully read, reading remaining content")
 		// Calculate how much content remains to be read
 		var remainingLength uint64
 		if r.su3.contentReader.reader == nil {
@@ -68,13 +69,13 @@ func (r *signatureReader) consumeRemainingContent() error {
 			}
 			_, err := io.ReadAll(contentReader)
 			if err != nil {
-				log.WithError(err).Error("Failed to read remaining content")
+				log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.consumeRemainingContent"}).WithError(err).Error("Failed to read remaining content")
 				return oops.Errorf("reading content: %w", err)
 			}
 		}
 		// Mark content as finished
 		r.su3.contentReader.finished = true
-		log.Debug("Marked content reader as finished after consuming remaining content")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.consumeRemainingContent"}).Debug("Marked content reader as finished after consuming remaining content")
 	}
 	return nil
 }
@@ -83,7 +84,7 @@ func (r *signatureReader) consumeRemainingContent() error {
 // Defense in depth: additional bounds check before buffer allocation.
 func (r *signatureReader) validateSignatureBounds() error {
 	if r.su3.SignatureLength > maxSignatureLength {
-		log.WithField("signature_length", r.su3.SignatureLength).WithField("max_signature_length", maxSignatureLength).Error("Signature length exceeds maximum allowed size")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.validateSignatureBounds", "signature_length": r.su3.SignatureLength, "max_signature_length": maxSignatureLength}).Error("Signature length exceeds maximum allowed size")
 		return ErrSignatureLengthTooLarge
 	}
 	return nil
@@ -109,10 +110,10 @@ func (r *signatureReader) readSignatureBytes() ([]byte, error) {
 		if err != nil {
 			if err == io.EOF {
 				// EOF before reading all signature bytes means missing signature
-				log.WithField("expected", r.su3.SignatureLength).WithField("actual", totalRead).Error("Signature shorter than expected")
+				log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.readSignatureBytes", "expected": r.su3.SignatureLength, "actual": totalRead}).Error("Signature shorter than expected")
 				return nil, ErrMissingSignature
 			}
-			log.WithError(err).Error("Failed to read signature")
+			log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.readSignatureBytes"}).WithError(err).Error("Failed to read signature")
 			return nil, oops.Errorf("reading signature: %w", err)
 		}
 	}
@@ -123,7 +124,7 @@ func (r *signatureReader) readSignatureBytes() ([]byte, error) {
 // verifySignatureBytesRead ensures we read the expected amount of signature data.
 func (r *signatureReader) verifySignatureBytesRead(sigBytes []byte, totalRead int) ([]byte, error) {
 	if totalRead != int(r.su3.SignatureLength) {
-		log.WithField("expected", r.su3.SignatureLength).WithField("actual", totalRead).Error("Signature shorter than expected")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.verifySignatureBytesRead", "expected": r.su3.SignatureLength, "actual": totalRead}).Error("Signature shorter than expected")
 		return nil, ErrMissingSignature
 	}
 	return sigBytes, nil
@@ -133,7 +134,7 @@ func (r *signatureReader) verifySignatureBytesRead(sigBytes []byte, totalRead in
 func (r *signatureReader) finalizeSignatureReader(sigBytes []byte) {
 	r.bytes = sigBytes
 	r.reader = bytes.NewReader(sigBytes)
-	log.WithField("signature_length", len(sigBytes)).Debug("Signature bytes read successfully")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.finalizeSignatureReader", "signature_length": len(sigBytes)}).Debug("Signature bytes read successfully")
 }
 
 // Read implements io.Reader interface for signatureReader.
@@ -143,15 +144,15 @@ func (r *signatureReader) Read(p []byte) (n int, err error) {
 	r.su3.mut.Lock()
 	defer r.su3.mut.Unlock()
 	if len(r.bytes) == 0 {
-		log.Debug("Signature bytes not yet read, getting bytes")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.Read"}).Debug("Signature bytes not yet read, getting bytes")
 		r.getBytes()
 	}
 	if r.err != nil {
-		log.WithError(r.err).Error("Error encountered while getting signature bytes")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.Read"}).WithError(r.err).Error("Error encountered while getting signature bytes")
 		return 0, r.err
 	}
 	// return r.reader.Read(p)
 	n, err = r.reader.Read(p)
-	log.WithField("bytes_read", n).Debug("Read from signature")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "signatureReader.Read", "bytes_read": n}).Debug("Read from signature")
 	return n, err
 }

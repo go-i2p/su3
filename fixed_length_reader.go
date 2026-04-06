@@ -2,6 +2,8 @@ package su3
 
 import (
 	"io"
+
+	"github.com/go-i2p/logger"
 )
 
 // fixedLengthReader is a wrapper around io.Reader that limits reading to a fixed number of bytes.
@@ -17,7 +19,7 @@ type fixedLengthReader struct {
 // Moved from: su3.go
 func (r *fixedLengthReader) Read(p []byte) (n int, err error) {
 	if r.readSoFar >= r.length {
-		log.Debug("Fixed length reader: EOF reached")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "fixedLengthReader.Read"}).Debug("Fixed length reader: EOF reached")
 		return 0, io.EOF
 	}
 	if uint64(len(p)) > r.length-r.readSoFar {
@@ -25,9 +27,12 @@ func (r *fixedLengthReader) Read(p []byte) (n int, err error) {
 	}
 	n, err = r.reader.Read(p)
 	r.readSoFar += uint64(n)
-	log.WithField("bytes_read", n).
-		WithField("total_read", r.readSoFar).
-		WithField("total_length", r.length).
-		Debug("Fixed length reader: Read operation")
+	log.WithFields(logger.Fields{
+		"pkg":          "su3",
+		"func":         "fixedLengthReader.Read",
+		"bytes_read":   n,
+		"total_read":   r.readSoFar,
+		"total_length": r.length,
+	}).Debug("Fixed length reader: Read operation")
 	return n, err
 }

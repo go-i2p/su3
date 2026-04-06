@@ -12,7 +12,7 @@ import (
 // The returned SU3 contains metadata about the file and provides access to content and signature.
 // Moved from: su3.go
 func Read(reader io.Reader) (su3 *SU3, err error) {
-	log.Debug("Starting to read SU3 file")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "Read"}).Debug("Starting to read SU3 file")
 	var buff bytes.Buffer
 
 	if err := readAndValidateMagicBytes(reader, &buff); err != nil {
@@ -55,6 +55,8 @@ func Read(reader io.Reader) (su3 *SU3, err error) {
 	}
 
 	log.WithFields(logger.Fields{
+		"pkg":            "su3",
+		"func":           "Read",
 		"signature_type": su3.SignatureType,
 		"file_type":      su3.FileType,
 		"content_type":   su3.ContentType,
@@ -71,7 +73,7 @@ func initializeReaders(su3 *SU3, sigType SignatureType, buff *bytes.Buffer) erro
 	su3.contentReader = &contentReader{
 		su3: su3,
 	}
-	log.Debug("Content reader initialized")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "initializeReaders"}).Debug("Content reader initialized")
 
 	// Use centralized hash algorithm selection to ensure consistency
 	hash, err := getHashForSignatureType(sigType)
@@ -80,11 +82,11 @@ func initializeReaders(su3 *SU3, sigType SignatureType, buff *bytes.Buffer) erro
 	}
 	su3.contentReader.hash = hash
 
-	log.WithField("signature_type", sigType).Debug("Hash algorithm selected for content reader")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "initializeReaders", "signature_type": sigType}).Debug("Hash algorithm selected for content reader")
 
 	if su3.contentReader.hash != nil {
 		su3.contentReader.hash.Write(buff.Bytes())
-		log.Debug("Wrote header to content hash")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "initializeReaders"}).Debug("Wrote header to content hash")
 	}
 
 	su3.signatureReader = &signatureReader{

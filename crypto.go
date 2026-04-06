@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/go-i2p/crypto/rand"
+	"github.com/go-i2p/logger"
 
 	"github.com/samber/oops"
 )
@@ -29,14 +30,14 @@ import (
 // Returns the DER-encoded certificate bytes or an error if generation fails.
 func NewSigningCertificate(signerID string, privateKey *rsa.PrivateKey) ([]byte, error) {
 	if privateKey == nil {
-		log.Error("Private key cannot be nil for certificate generation")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "NewSigningCertificate"}).Error("Private key cannot be nil for certificate generation")
 		return nil, oops.Errorf("private key cannot be nil")
 	}
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.CryptoInt(rand.Reader, serialNumberLimit)
 	if err != nil {
-		log.WithError(err).Error("Failed to generate certificate serial number")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "NewSigningCertificate"}).WithError(err).Error("Failed to generate certificate serial number")
 		return nil, oops.Errorf("generating certificate serial number: %w", err)
 	}
 
@@ -78,11 +79,11 @@ func NewSigningCertificate(signerID string, privateKey *rsa.PrivateKey) ([]byte,
 	parent := template
 	cert, err := x509.CreateCertificate(rand.Reader, template, parent, publicKey, privateKey)
 	if err != nil {
-		log.WithError(err).Error("Failed to create X.509 certificate")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "NewSigningCertificate"}).WithError(err).Error("Failed to create X.509 certificate")
 		return nil, oops.Errorf("creating certificate: %w", err)
 	}
 
-	log.WithField("signer_id", signerID).Debug("Successfully generated signing certificate")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "NewSigningCertificate", "signer_id": signerID}).Debug("Successfully generated signing certificate")
 	return cert, nil
 }
 
@@ -102,7 +103,7 @@ func getHashForSignatureType(sigType SignatureType) (hash.Hash, error) {
 	case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
 		return sha512.New(), nil
 	default:
-		log.WithField("signature_type", sigType).Error("Unsupported signature type for hash selection")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "getHashForSignatureType", "signature_type": sigType}).Error("Unsupported signature type for hash selection")
 		return nil, ErrUnsupportedSignatureType
 	}
 }
@@ -123,7 +124,7 @@ func getCryptoHashForSignatureType(sigType SignatureType) (crypto.Hash, error) {
 	case ECDSA_SHA512_P521, RSA_SHA512_4096, EdDSA_SHA512_Ed25519ph:
 		return crypto.SHA512, nil
 	default:
-		log.WithField("signature_type", sigType).Error("Unsupported signature type for crypto hash selection")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "getCryptoHashForSignatureType", "signature_type": sigType}).Error("Unsupported signature type for crypto hash selection")
 		return 0, ErrUnsupportedSignatureType
 	}
 }

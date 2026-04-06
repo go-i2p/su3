@@ -77,7 +77,7 @@ type SU3 struct {
 // For test cases demonstrating this behavior, see TestReadSignatureFirst.
 // Moved from: su3.go
 func (su3 *SU3) Content(publicKey interface{}) io.Reader {
-	log.WithField("signer_id", su3.SignerID).Debug("Accessing SU3 content")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.Content", "signer_id": su3.SignerID}).Debug("Accessing SU3 content")
 	su3.publicKey = publicKey
 	return su3.contentReader
 }
@@ -104,7 +104,7 @@ func (su3 *SU3) Content(publicKey interface{}) io.Reader {
 //
 // Moved from: su3.go
 func (su3 *SU3) Signature() io.Reader {
-	log.Debug("Accessing SU3 signature")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.Signature"}).Debug("Accessing SU3 signature")
 	return su3.signatureReader
 }
 
@@ -128,7 +128,7 @@ func (su3 *SU3) SetContent(content []byte) {
 	su3.content = make([]byte, len(content))
 	copy(su3.content, content)
 	su3.ContentLength = uint64(len(content))
-	log.WithField("content_length", len(content)).Debug("Content set for SU3 file")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SetContent", "content_length": len(content)}).Debug("Content set for SU3 file")
 }
 
 // SetSignerID sets the signer ID for the SU3 file.
@@ -136,20 +136,20 @@ func (su3 *SU3) SetSignerID(signerID string) {
 	su3.mut.Lock()
 	defer su3.mut.Unlock()
 	su3.SignerID = signerID
-	log.WithField("signer_id", signerID).Debug("Signer ID set for SU3 file")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SetSignerID", "signer_id": signerID}).Debug("Signer ID set for SU3 file")
 }
 
 // SetVersion sets the version string for the SU3 file.
 // Returns ErrVersionTooLong if version exceeds 255 bytes (the protocol maximum).
 func (su3 *SU3) SetVersion(version string) error {
 	if len(version) > 255 {
-		log.WithField("version_length", len(version)).Error("Version string exceeds maximum allowed length")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SetVersion", "version_length": len(version)}).Error("Version string exceeds maximum allowed length")
 		return ErrVersionTooLong
 	}
 	su3.mut.Lock()
 	defer su3.mut.Unlock()
 	su3.Version = version
-	log.WithField("version", version).Debug("Version set for SU3 file")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SetVersion", "version": version}).Debug("Version set for SU3 file")
 	return nil
 }
 
@@ -158,7 +158,7 @@ func (su3 *SU3) SetFileType(fileType FileType) {
 	su3.mut.Lock()
 	defer su3.mut.Unlock()
 	su3.FileType = fileType
-	log.WithField("file_type", fileType).Debug("File type set for SU3 file")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SetFileType", "file_type": fileType}).Debug("File type set for SU3 file")
 }
 
 // SetContentType sets the content type for the SU3 file.
@@ -166,7 +166,7 @@ func (su3 *SU3) SetContentType(contentType ContentType) {
 	su3.mut.Lock()
 	defer su3.mut.Unlock()
 	su3.ContentType = contentType
-	log.WithField("content_type", contentType).Debug("Content type set for SU3 file")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SetContentType", "content_type": contentType}).Debug("Content type set for SU3 file")
 }
 
 // SetSignatureType sets the signature type for the SU3 file.
@@ -174,7 +174,7 @@ func (su3 *SU3) SetSignatureType(signatureType SignatureType) {
 	su3.mut.Lock()
 	defer su3.mut.Unlock()
 	su3.SignatureType = signatureType
-	log.WithField("signature_type", signatureType).Debug("Signature type set for SU3 file")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SetSignatureType", "signature_type": signatureType}).Debug("Signature type set for SU3 file")
 }
 
 // getExpectedRSAKeySize returns the expected RSA key size in bytes for a given signature type.
@@ -203,7 +203,7 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 	defer su3.mut.Unlock()
 
 	if privateKey == nil {
-		log.Error("Private key cannot be nil for SU3 signing")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.Sign"}).Error("Private key cannot be nil for SU3 signing")
 		return oops.Errorf("private key cannot be nil")
 	}
 
@@ -215,6 +215,8 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 	}
 	if expectedKeySize > 0 && keySize != expectedKeySize {
 		log.WithFields(logger.Fields{
+			"pkg":               "su3",
+			"func":              "SU3.Sign",
 			"signature_type":    su3.SignatureType,
 			"expected_key_size": expectedKeySize,
 			"actual_key_size":   keySize,
@@ -248,14 +250,14 @@ func (su3 *SU3) Sign(privateKey *rsa.PrivateKey) error {
 	// I2P reseed servers sign and how verifyRSASignature verifies.
 	sig, err := rsa.SignPKCS1v15(rand.Reader, privateKey, 0, digest)
 	if err != nil {
-		log.WithError(err).Error("Failed to generate RSA signature for SU3 file")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.Sign"}).WithError(err).Error("Failed to generate RSA signature for SU3 file")
 		return oops.Errorf("generating RSA signature: %w", err)
 	}
 
 	su3.signature = sig
 	su3.SignatureLength = uint16(len(sig))
 
-	log.WithField("signature_length", len(sig)).Debug("SU3 file signed successfully")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.Sign", "signature_length": len(sig)}).Debug("SU3 file signed successfully")
 	return nil
 }
 
@@ -284,7 +286,7 @@ func (su3 *SU3) SignECDSA(key *ecdsa.PrivateKey) error {
 	defer su3.mut.Unlock()
 
 	if key == nil {
-		log.Error("ECDSA private key cannot be nil for SU3 signing")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SignECDSA"}).Error("ECDSA private key cannot be nil for SU3 signing")
 		return oops.Errorf("private key cannot be nil")
 	}
 
@@ -311,7 +313,7 @@ func (su3 *SU3) SignECDSA(key *ecdsa.PrivateKey) error {
 
 	r, s, err := ecdsa.Sign(rand.Reader, key, digest)
 	if err != nil {
-		log.WithError(err).Error("Failed to generate ECDSA signature")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SignECDSA"}).WithError(err).Error("Failed to generate ECDSA signature")
 		return oops.Errorf("generating ECDSA signature: %w", err)
 	}
 
@@ -320,7 +322,7 @@ func (su3 *SU3) SignECDSA(key *ecdsa.PrivateKey) error {
 	new(big.Int).Set(s).FillBytes(sig[keyBytes:])
 	su3.signature = sig
 
-	log.WithField("signature_length", len(sig)).Debug("SU3 file signed with ECDSA successfully")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SignECDSA", "signature_length": len(sig)}).Debug("SU3 file signed with ECDSA successfully")
 	return nil
 }
 
@@ -333,7 +335,7 @@ func (su3 *SU3) SignEdDSA(key ed25519.PrivateKey) error {
 	defer su3.mut.Unlock()
 
 	if key == nil {
-		log.Error("EdDSA private key cannot be nil for SU3 signing")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SignEdDSA"}).Error("EdDSA private key cannot be nil for SU3 signing")
 		return oops.Errorf("private key cannot be nil")
 	}
 	if su3.SignatureType != EdDSA_SHA512_Ed25519ph {
@@ -355,19 +357,19 @@ func (su3 *SU3) SignEdDSA(key ed25519.PrivateKey) error {
 
 	signer, err := goi2ped25519.Ed25519PrivateKey(key).NewSigner()
 	if err != nil {
-		log.WithError(err).Error("Failed to create EdDSA signer")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SignEdDSA"}).WithError(err).Error("Failed to create EdDSA signer")
 		return oops.Errorf("creating EdDSA signer: %w", err)
 	}
 	sig, err := signer.SignHash(digest)
 	if err != nil {
-		log.WithError(err).Error("Failed to generate EdDSA signature")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SignEdDSA"}).WithError(err).Error("Failed to generate EdDSA signature")
 		return oops.Errorf("generating EdDSA signature: %w", err)
 	}
 
 	su3.signature = sig
 	su3.SignatureLength = uint16(len(sig))
 
-	log.WithField("signature_length", len(sig)).Debug("SU3 file signed with EdDSA successfully")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.SignEdDSA", "signature_length": len(sig)}).Debug("SU3 file signed with EdDSA successfully")
 	return nil
 }
 
@@ -388,17 +390,17 @@ func (su3 *SU3) encodeHeader(buf *bytes.Buffer) {
 
 	sigTypeBytes, ok := sigTypesReverse[su3.SignatureType]
 	if !ok {
-		log.WithField("signature_type", su3.SignatureType).Error("Unknown signature type in header encoding")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.encodeHeader", "signature_type": su3.SignatureType}).Error("Unknown signature type in header encoding")
 		sigTypeBytes = sigTypesReverse[RSA_SHA512_4096]
 	}
 	fileTypeByte, ok := fileTypesReverse[su3.FileType]
 	if !ok {
-		log.WithField("file_type", su3.FileType).Error("Unknown file type in header encoding")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.encodeHeader", "file_type": su3.FileType}).Error("Unknown file type in header encoding")
 		fileTypeByte = fileTypesReverse[ZIP]
 	}
 	contentTypeByte, ok := contentTypesReverse[su3.ContentType]
 	if !ok {
-		log.WithField("content_type", su3.ContentType).Error("Unknown content type in header encoding")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.encodeHeader", "content_type": su3.ContentType}).Error("Unknown content type in header encoding")
 		contentTypeByte = contentTypesReverse[UNKNOWN]
 	}
 
@@ -446,13 +448,13 @@ func (su3 *SU3) MarshalBinary() ([]byte, error) {
 	defer su3.mut.Unlock()
 
 	if su3.signature == nil {
-		log.Error("Cannot marshal SU3 file without signature")
+		log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.MarshalBinary"}).Error("Cannot marshal SU3 file without signature")
 		return nil, oops.Errorf("signature is required before marshaling")
 	}
 
 	buf := bytes.NewBuffer(su3.BodyBytes())
 	binary.Write(buf, binary.BigEndian, su3.signature)
 
-	log.WithField("total_size", buf.Len()).Debug("SU3 file marshaled successfully")
+	log.WithFields(logger.Fields{"pkg": "su3", "func": "SU3.MarshalBinary", "total_size": buf.Len()}).Debug("SU3 file marshaled successfully")
 	return buf.Bytes(), nil
 }
