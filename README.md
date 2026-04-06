@@ -70,6 +70,35 @@ Note: if you want to read the content, the Content() io.Reader must be read
 bytes will be thrown away. If you then attempt to read the content, you will get
 an error. For clarification, see TestReadSignatureFirst.
 
+## Logging
+
+This package uses [`github.com/go-i2p/logger`](https://github.com/go-i2p/logger) for structured logging. Every log call includes `pkg` and `func` fields for traceability.
+
+### Environment Variables
+
+| Variable | Value | Effect |
+|---|---|---|
+| `DEBUG_I2P` | `debug` | Enables debug-level log output |
+| `WARNFAIL_I2P` | `true` | Promotes warnings to fatal errors |
+
+### Example
+
+```bash
+# Enable debug logging
+DEBUG_I2P=debug ./my-app
+
+# Enable debug logging with warnings as fatal errors
+DEBUG_I2P=debug WARNFAIL_I2P=true ./my-app
+```
+
+Sample log output:
+
+```
+level=debug msg="Starting to read SU3 file" func=Read pkg=su3
+level=debug msg="Magic bytes verified" func=readAndValidateMagicBytes pkg=su3
+level=debug msg="Signature type read" func=readSignatureInfo pkg=su3 signature_type=RSA-SHA512-4096
+```
+
 ## Usage
 
 ```go
