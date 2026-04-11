@@ -1,6 +1,6 @@
 module github.com/go-i2p/su3
 
-go 1.25.0
+go 1.26.1
 
 require (
 	github.com/go-i2p/crypto v0.1.4-0.20260406221300-934597cc4fdf
