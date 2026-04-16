@@ -3,11 +3,12 @@ package su3
 import (
 	"bytes"
 	"crypto"
-	"github.com/go-i2p/crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"testing"
+
+	"github.com/go-i2p/crypto/rand"
 
 	"github.com/stretchr/testify/assert"
 )

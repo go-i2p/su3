@@ -1,9 +1,10 @@
 package su3
 
 import (
-	"github.com/go-i2p/crypto/rand"
 	"crypto/rsa"
 	"testing"
+
+	"github.com/go-i2p/crypto/rand"
 
 	"github.com/stretchr/testify/assert"
 )
