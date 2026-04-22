@@ -5,8 +5,8 @@ github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/go-i2p/crypto v0.1.4-0.20260416213930-42306837bfb2 h1:NrAzKfpAshcdLWqIAnasn77jX/5N41WHczCTtqdq7SA=
-github.com/go-i2p/crypto v0.1.4-0.20260416213930-42306837bfb2/go.mod h1:GWxeF41QNWqxI1kvTD8a4ve3JJgDAMb790HlQvrYjME=
+github.com/go-i2p/crypto v0.1.51 h1:3V4/Ojg3fMGqECGFswx0QDQnJwcoQaD1r23Ry3ZhXIw=
+github.com/go-i2p/crypto v0.1.51/go.mod h1:GWxeF41QNWqxI1kvTD8a4ve3JJgDAMb790HlQvrYjME=
 github.com/go-i2p/logger v0.1.5 h1:bqX0R59jRNhCTuOVm97gtvo6tH2+nU1NJ53WzAi3I4I=
 github.com/go-i2p/logger v0.1.5/go.mod h1:fEh2nRZ6HwLJNaWJuE25mCzDa6VpCI4O37u5OfGNvus=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
