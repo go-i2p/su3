@@ -845,6 +845,7 @@ func TestBug4HashAlgorithmConsistency(t *testing.T) {
 		})
 	}
 } // TestBug4HashAlgorithmConsistencyFixed verifies that the refactored hash algorithm
+
 // selection uses centralized helper functions for consistency.
 func TestBug4HashAlgorithmConsistencyFixed(t *testing.T) {
 	testCases := []SignatureType{
