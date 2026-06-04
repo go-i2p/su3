@@ -1,4 +1,4 @@
-Release notes for: `su3` Version `0.1.55`
+Release notes for: `su3` Version `0.1.56`
 ==============================================
 
 This file is generated automatically in order to keep git tags in sync.
