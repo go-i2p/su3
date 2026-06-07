@@ -3,8 +3,8 @@ module github.com/go-i2p/su3
 go 1.26.3
 
 require (
-	github.com/go-i2p/crypto v0.1.57-0.20260604152307-19161df00c0b
-	github.com/go-i2p/logger v0.1.57
+	github.com/go-i2p/crypto v0.1.58-0.20260607173658-21060af70b17
+	github.com/go-i2p/logger v0.1.58
 	github.com/samber/oops v1.22.0
 	github.com/stretchr/testify v1.11.1
 )
