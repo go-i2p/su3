@@ -26,3 +26,9 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/go-i2p/logger => /home/idk/go/src/github.com/go-i2p/logger
+
+replace github.com/go-i2p/elgamal => /home/idk/go/src/github.com/go-i2p/elgamal
+
+replace github.com/go-i2p/go-i2p => /home/idk/go/src/github.com/go-i2p/go-i2p
